@@ -14,13 +14,14 @@ import org.junit.Ignore
 import org.junit.Test
 import org.mozilla.fenix.helpers.AndroidAssetDispatcher
 import org.mozilla.fenix.helpers.HomeActivityTestRule
+import org.mozilla.fenix.ui.robots.homeScreen
 
 /**
  *  Tests for verifying the main three dot menu options
  *
  */
 
-class SettingsTest {
+class SettingsAboutTest {
     /* ktlint-disable no-blank-line-before-rbrace */ // This imposes unreadable grouping.
 
     private val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -42,56 +43,24 @@ class SettingsTest {
         mockWebServer.shutdown()
     }
 
-    @Ignore("This is a stub test, ignore for now")
     @Test
     // Walks through settings menu and sub-menus to ensure all items are present
-    fun settingsMenusItemsTest() {
-        // SYNC
-
-        // see: SettingsSyncTest
-
-        // BASICS
-
-        // see: SettingsBasicsTest
-
-        // PRIVACY
-
-        // see: SettingsPrivacyTest
-
-        // DEVELOPER TOOLS
-
-        // Verify header: "Developer Tools"
-        // Verify item: "Remote debugging via USB" and default toggle value: "Off"
-
+    fun settingsAboutItemsTest() {
         // ABOUT
-
         // Verify header: "About"
         // Verify item: "Help"
         // Verify item: "Rate on Google Play"
         // Verify item: "About Firefox Preview"
         //
-    }
-
-    // SYNC
-    // see: SettingsSyncTest
-
-    // BASICS
-    // see: SettingsBasicsTest
-    //
-    // PRIVACY
-    // see: SettingsPrivacyTest
-
-    // DEVELOPER TOOLS
-    @Ignore("This is a stub test, ignore for now")
-    @Test
-    fun turnOnRemoteDebuggingViaUsb() {
-        // Open terminal
-        // Verify USB debugging is off
-        // Open 3dot (main) menu
-        // Select settings
-        // Toggle Remote debugging via USB to 'on'
-        // Open terminal
-        // Verify USB debugging is on
+        homeScreen {
+        }.openThreeDotMenu {
+        }.openSettings {
+            // ABOUT
+            verifyAboutHeading()
+            verifyHelp()
+            verifyRateOnGooglePlay()
+            verifyAboutFirefoxPreview()
+        }
     }
 
     // ABOUT

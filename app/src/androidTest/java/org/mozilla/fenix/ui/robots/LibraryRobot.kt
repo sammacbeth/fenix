@@ -20,7 +20,7 @@ import org.mozilla.fenix.R
 import org.mozilla.fenix.helpers.click
 
 /**
- * Implementation of Robot Pattern for the your library menu.
+ * Implementation of Robot Pattern for the Your Library menu.
  */
 class LibraryRobot {
     fun verifyLibraryView() = assertLibraryView()

@@ -25,7 +25,7 @@ import org.mozilla.fenix.helpers.click
 /**
  * Implementation of Robot Pattern for the three dot (main) menu.
  */
-class ThreeDotMenuRobot {
+class ThreeDotMenuMainRobot {
     fun verifySettingsButton() = assertSettingsButton()
     fun verifyLibraryButton() = assertLibraryButton()
     fun verifyHelpButton() = assertHelpButton()
