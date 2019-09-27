@@ -40,7 +40,7 @@ object FeatureFlags {
     /**
      * Displays the categories blocked by ETP in a panel in the toolbar
      */
-    val etpCategories = nightly or debug
+    val etpCategories = false
 
     /**
      * Granular data deletion provides additional choices on the Delete Browsing Data

@@ -34,7 +34,7 @@ class Settings private constructor(
 ) : PreferencesHolder {
     companion object {
         const val autoBounceMaximumCount = 2
-        const val trackingProtectionOnboardingMaximumCount = 2
+        const val trackingProtectionOnboardingMaximumCount = 0
         const val FENIX_PREFERENCES = "fenix_preferences"
         private const val BLOCKED_INT = 0
         private const val ASK_TO_ALLOW_INT = 1
@@ -97,12 +97,12 @@ class Settings private constructor(
 
     val isTelemetryEnabled by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_telemetry),
-        default = true
+        default = false
     )
 
     val isExperimentationEnabled by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_experimentation),
-        default = true
+        default = false
     )
 
     private var trackingProtectionOnboardingShownThisSession = false
