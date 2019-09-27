@@ -1,4 +1,4 @@
-include ':app', ':architecture'
+include ':app', ':architecture', ':dat'
 
 //////////////////////////////////////////////////////////////////////////
 // Local Development overrides

@@ -7,6 +7,7 @@ package org.mozilla.fenix.components
 import GeckoProvider
 import android.content.Context
 import android.content.res.Configuration
+import com.cliqz.dat.DatFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -57,7 +58,9 @@ class Core(private val context: Context) {
             suspendMediaWhenInactive = !FeatureFlags.mediaIntegration
         )
 
-        GeckoEngine(context, defaultSettings, GeckoProvider.getOrCreateRuntime(context))
+        GeckoEngine(context, defaultSettings, GeckoProvider.getOrCreateRuntime(context)).also {
+            DatFeature.install(it)
+        }
     }
 
     /**
