@@ -43,7 +43,7 @@ object FeatureFlags {
     /**
      * Displays the categories blocked by ETP in a panel in the toolbar
      */
-    val etpCategories = nightly or debug
+    val etpCategories = false
 
     /**
      * Gives option in Settings to disable auto play media
