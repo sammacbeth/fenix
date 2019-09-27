@@ -19,7 +19,7 @@ import com.android.build.OutputFile
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "org.mozilla"
+        applicationId "com.cliqz"
         minSdkVersion Config.minSdkVersion
         targetSdkVersion Config.targetSdkVersion
         versionCode 1
