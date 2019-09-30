@@ -32,6 +32,12 @@ android {
         buildConfigField "boolean", "USE_RELEASE_VERSIONING", "false"
     }
 
+    aaptOptions{
+        // default ignoreAssetsPattern list includes all files and folders starting with _
+        // that breaks webextensions i18n as traslation are located in _locales folder
+        ignoreAssetsPattern  '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+
     def releaseTemplate = {
         shrinkResources true
         minifyEnabled true
@@ -318,6 +324,7 @@ androidExtensions {
 dependencies {
     implementation project(':architecture')
     implementation project(':dat')
+    implementation project(':privacy')
 
     geckoNightlyImplementation Deps.mozilla_browser_engine_gecko_nightly
     geckoBetaImplementation Deps.mozilla_browser_engine_gecko_beta
