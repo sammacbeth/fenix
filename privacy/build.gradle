@@ -5,7 +5,6 @@ plugins {
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
-
 android {
     compileSdkVersion 29
 
@@ -20,6 +19,12 @@ android {
         consumerProguardFiles 'consumer-rules.pro'
     }
 
+    aaptOptions{
+        // default ignoreAssetsPattern list includes all files and folders starting with _
+        // that breaks webextensions i18n as traslation are located in _locales folder
+        ignoreAssetsPattern  '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -32,17 +37,17 @@ android {
 def addonsPath = 'src/main/assets/extensions'
 
 task downloadAddon(type: Download) {
-    src 'https://s3.amazonaws.com/cdncliqz/update/dat_protocol_pre/dat%40cliqz.com/dat_protocol-0.0.14.zip'
-    dest new File(downloadTaskDir, "dat@cliqz.com.zip")
+    src 'https://cdncliqz.s3.amazonaws.com/update/edge/cliqz_privacy/master/12.40.0.161aabe.zip'
+    dest new File(downloadTaskDir, "privacy@cliqz.com.zip")
 }
 
 task extractAddon(dependsOn: [downloadAddon], type: Copy) {
     from zipTree(downloadAddon.dest)
-    into "${addonsPath}/dat"
+    into "${addonsPath}/cliqz"
 }
 
 task deleteAddon(type: Delete) {
-    delete "${addonsPath}/dat"
+    delete "${addonsPath}/cliqz"
 }
 
 preBuild.dependsOn(extractAddon)
