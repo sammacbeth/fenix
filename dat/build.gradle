@@ -41,7 +41,12 @@ task extractAddon(dependsOn: [downloadAddon], type: Copy) {
     into "${addonsPath}/dat"
 }
 
+task deleteAddon(type: Delete) {
+    delete "${addonsPath}/dat"
+}
+
 preBuild.dependsOn(extractAddon)
+clean.dependsOn deleteAddon
 
 dependencies {
     implementation project(':architecture')
