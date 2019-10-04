@@ -7,6 +7,7 @@ package org.mozilla.fenix.components
 import GeckoProvider
 import android.content.Context
 import android.content.res.Configuration
+import com.cliqz.dat.DatFeature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -63,6 +64,7 @@ class Core(private val context: Context) {
 
         GeckoEngine(context, defaultSettings, GeckoProvider.getOrCreateRuntime(context)).also {
             WebCompatFeature.install(it)
+            DatFeature.install(it)
         }
     }
 
