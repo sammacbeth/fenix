@@ -47,10 +47,10 @@ jobs:
     inputs:
       apkFiles: '$(BUILD_OUTPUT_DIR)/**/*.apk'
       jarsign: true
-      jarsignerKeystoreFile: 'upload-keystore.jks'
-      jarsignerKeystorePassword: '$(keystore-password)'
+      jarsignerKeystoreFile: sam-browser-keys.jks
+      jarsignerKeystorePassword: '$(jarsignerKeystorePassword)'
       jarsignerKeystoreAlias: 'upload'
-      jarsignerKeyPassword: '$(upload-key-password)'
+      jarsignerKeyPassword: '$(jarsignerKeyPassword)'
       zipalign: true
       zipalignFile: '/Users/vsts/Library/Android/sdk/build-tools/28.0.3/zipalign'
 
