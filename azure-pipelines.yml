@@ -1,0 +1,67 @@
+variables:
+  BUILD_OUTPUT_DIR: app/build/outputs/apk
+  IMG_NAME: system-images;android-23;google_apis;x86
+
+jobs:
+- job: Build_Debug
+
+  pool:
+    vmImage: 'macOS 10.13'
+
+  steps:
+
+  - task: Gradle@2
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      tasks: 'assembleDebug'
+    displayName: 'Assemble Debug'
+
+  - task: CopyFiles@2
+    inputs:
+      contents: '$(BUILD_OUTPUT_DIR)/**/*.apk'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+    
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish'
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: '$(Build.BuildId).DebugBuilds'
+      publishLocation: 'Container'
+
+- job: Build_Release
+  condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/v')
+
+  pool:
+    vmImage: 'macOS 10.13'
+
+  steps:
+
+  - task: Gradle@2
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      tasks: 'assemble'
+      options: '-PversionName=1.0.$(Build.BuildNumber)'
+    displayName: 'Assemble Release'
+
+  - task: AndroidSigning@2
+    inputs:
+      apkFiles: '$(BUILD_OUTPUT_DIR)/**/*.apk'
+      jarsign: true
+      jarsignerKeystoreFile: 'upload-keystore.jks'
+      jarsignerKeystorePassword: '$(keystore-password)'
+      jarsignerKeystoreAlias: 'upload'
+      jarsignerKeyPassword: '$(upload-key-password)'
+      zipalign: true
+      zipalignFile: '/Users/vsts/Library/Android/sdk/build-tools/28.0.3/zipalign'
+
+  - task: CopyFiles@2
+    inputs:
+      contents: '$(BUILD_OUTPUT_DIR)/**/*.apk'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish'
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: '$(Build.BuildId).ReleaseBuilds'
+      publishLocation: 'Container'
