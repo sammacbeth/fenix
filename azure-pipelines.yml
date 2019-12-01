@@ -43,16 +43,15 @@ jobs:
       options: '-PversionName=1.0.$(Build.BuildNumber)'
     displayName: 'Assemble Release'
 
-  - task: AndroidSigning@2
+  - task: AndroidSigning@3
     inputs:
       apkFiles: '$(BUILD_OUTPUT_DIR)/**/*.apk'
-      jarsign: true
-      jarsignerKeystoreFile: sam-browser-keys.jks
-      jarsignerKeystorePassword: '$(jarsignerKeystorePassword)'
-      jarsignerKeystoreAlias: 'upload'
-      jarsignerKeyPassword: '$(jarsignerKeyPassword)'
-      zipalign: true
-      zipalignFile: '/Users/vsts/Library/Android/sdk/build-tools/28.0.3/zipalign'
+      apksign: true
+      apksignerKeystoreFile: 'sam-browser.keystore'
+      apksignerKeystorePassword: '$(apksignerKeystorePassword)'
+      apksignerKeystoreAlias: '$(apksignerKeystoreAlias)'
+      apksignerKeyPassword: '$(apksignerKeyPassword)'
+      zipalign: false
 
   - task: CopyFiles@2
     inputs:
