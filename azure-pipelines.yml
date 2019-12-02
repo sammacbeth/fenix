@@ -1,6 +1,7 @@
 variables:
-  BUILD_OUTPUT_DIR: app/build/outputs/apk
-  IMG_NAME: system-images;android-23;google_apis;x86
+- group: signing
+- name: 'BUILD_OUTPUT_DIR'
+  value: 'app/build/outputs/apk'
 
 jobs:
 - job: Build_Debug
@@ -43,9 +44,23 @@ jobs:
       options: '-PversionName=1.0.$(Build.BuildNumber)'
     displayName: 'Assemble Release'
 
+  - task: AndroidSigning@3
+    inputs:
+      apkFiles: '$(BUILD_OUTPUT_DIR)/**/*.apk'
+      apksign: true
+      apksignerKeystoreFile: 'sam-browser.keystore'
+      apksignerKeystorePassword: '$(apksignerKeystorePassword)'
+      apksignerKeystoreAlias: '$(apksignerKeystoreAlias)'
+      apksignerKeyPassword: '$(apksignerKeyPassword)'
+      zipalign: true
+
+  - bash: |
+      for f in $(BUILD_OUTPUT_DIR)/geckoBeta/fenixProduction/*.apk; do mv "$f" "${f/unsigned/signed}"; done
+    displayName: 'Rename APKs'
+
   - task: CopyFiles@2
     inputs:
-      contents: '$(BUILD_OUTPUT_DIR)/**/*.apk'
+      contents: '$(BUILD_OUTPUT_DIR)/geckoBeta/fenixProduction/*.apk'
       targetFolder: '$(Build.ArtifactStagingDirectory)'
 
   - task: PublishBuildArtifacts@1
