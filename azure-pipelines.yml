@@ -39,19 +39,9 @@ jobs:
   - task: Gradle@2
     inputs:
       gradleWrapperFile: 'gradlew'
-      tasks: 'assemble'
+      tasks: 'assembleFenixProduction'
       options: '-PversionName=1.0.$(Build.BuildNumber)'
     displayName: 'Assemble Release'
-
-  - task: AndroidSigning@3
-    inputs:
-      apkFiles: '$(BUILD_OUTPUT_DIR)/**/*.apk'
-      apksign: true
-      apksignerKeystoreFile: 'sam-browser.keystore'
-      apksignerKeystorePassword: '$(apksignerKeystorePassword)'
-      apksignerKeystoreAlias: '$(apksignerKeystoreAlias)'
-      apksignerKeyPassword: '$(apksignerKeyPassword)'
-      zipalign: false
 
   - task: CopyFiles@2
     inputs:
