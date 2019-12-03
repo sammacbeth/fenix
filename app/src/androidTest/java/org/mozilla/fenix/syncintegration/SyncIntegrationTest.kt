@@ -43,7 +43,6 @@ class SyncIntegrationTest {
         tapReturnToPreviousApp()
         homeScreen {
         }.openThreeDotMenu {
-        }.openLibrary {
         }.openHistory { }
         historyAfterSyncIsShown()
     }
@@ -55,7 +54,6 @@ class SyncIntegrationTest {
         tapReturnToPreviousApp()
         homeScreen {
         }.openThreeDotMenu {
-        }.openLibrary {
         }.openBookmarks { }
         bookmarkAfterSyncIsShown()
     }
@@ -97,7 +95,7 @@ class SyncIntegrationTest {
     }
 
     fun tapOnContinueButton() {
-        val continueButton = mDevice.findObject(By.res("org.mozilla.fenix.debug:id/submit-btn"))
+        val continueButton = mDevice.findObject(By.res("submit-btn"))
         continueButton.clickAndWait(Until.newWindow(), TestAssetHelper.waitingTime)
     }
 

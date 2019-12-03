@@ -10,6 +10,7 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -46,10 +47,10 @@ import mozilla.components.feature.session.FullScreenFeature
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.session.SwipeRefreshFeature
-import mozilla.components.feature.session.WindowFeature
 import mozilla.components.feature.sitepermissions.SitePermissions
 import mozilla.components.feature.sitepermissions.SitePermissionsFeature
 import mozilla.components.feature.sitepermissions.SitePermissionsRules
+import mozilla.components.feature.tabs.WindowFeature
 import mozilla.components.support.base.feature.BackHandler
 import mozilla.components.support.base.feature.PermissionsFeature
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
@@ -74,6 +75,7 @@ import org.mozilla.fenix.components.toolbar.ToolbarIntegration
 import org.mozilla.fenix.downloads.DownloadService
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.enterToImmersiveMode
+import org.mozilla.fenix.ext.getDimenInDip
 import org.mozilla.fenix.ext.getRootView
 import org.mozilla.fenix.ext.metrics
 import org.mozilla.fenix.ext.nav
@@ -223,11 +225,11 @@ abstract class BaseBrowserFragment : Fragment(), BackHandler, SessionManager.Obs
                 view = view
             )
 
-            browserToolbarView.view.setOnSiteSecurityClickedListener {
+            browserToolbarView.view.display.setOnSiteSecurityClickedListener {
                 showQuickSettingsDialog()
             }
 
-            browserToolbarView.view.setOnTrackingProtectionClickedListener {
+            browserToolbarView.view.display.setOnTrackingProtectionClickedListener {
                 context.metrics.track(Event.TrackingProtectionIconPressed)
                 showTrackingProtectionPanel()
             }
@@ -246,7 +248,10 @@ abstract class BaseBrowserFragment : Fragment(), BackHandler, SessionManager.Obs
             )
 
             windowFeature.set(
-                feature = WindowFeature(sessionManager),
+                feature = WindowFeature(
+                    store = store,
+                    tabsUseCases = context.components.useCases.tabsUseCases
+                ),
                 owner = this,
                 view = view
             )
@@ -261,6 +266,13 @@ abstract class BaseBrowserFragment : Fragment(), BackHandler, SessionManager.Obs
                     downloadManager = FetchDownloadManager(
                         context.applicationContext,
                         DownloadService::class
+                    ),
+                    promptsStyling = DownloadsFeature.PromptsStyling(
+                        gravity = Gravity.BOTTOM,
+                        shouldWidthMatchParent = true,
+                        positiveButtonBackgroundColor = ThemeManager.resolveAttribute(R.attr.accent, context),
+                        positiveButtonTextColor = ThemeManager.resolveAttribute(R.attr.contrastText, context),
+                        positiveButtonRadius = context.getDimenInDip(R.dimen.tab_corner_radius)
                     ),
                     onNeedToRequestPermissions = { permissions ->
                         requestPermissions(permissions, REQUEST_CODE_DOWNLOAD_PERMISSIONS)

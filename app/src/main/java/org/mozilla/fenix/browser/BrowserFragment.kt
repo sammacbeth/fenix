@@ -36,12 +36,12 @@ import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.browser.session.Session
 import mozilla.components.feature.contextmenu.ContextMenuCandidate
 import mozilla.components.feature.readerview.ReaderViewFeature
+import mozilla.components.feature.session.TrackingProtectionUseCases
 import mozilla.components.feature.sitepermissions.SitePermissions
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.feature.BackHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import org.jetbrains.anko.dimen
-import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.readermode.DefaultReaderModeController
@@ -216,7 +216,6 @@ class BrowserFragment : BaseBrowserFragment(), BackHandler {
                 sessionId = session.id,
                 url = session.url,
                 isSecured = session.securityInfo.secure,
-                isTrackingProtectionOn = session.trackerBlockingEnabled,
                 sitePermissions = sitePermissions,
                 gravity = getAppropriateLayoutGravity()
             )
@@ -224,14 +223,21 @@ class BrowserFragment : BaseBrowserFragment(), BackHandler {
     }
 
     override fun navToTrackingProtectionPanel(session: Session) {
-        val directions =
-            BrowserFragmentDirections.actionBrowserFragmentToTrackingProtectionPanelDialogFragment(
-                sessionId = session.id,
-                url = session.url,
-                trackingProtectionEnabled = session.trackerBlockingEnabled,
-                gravity = getAppropriateLayoutGravity()
-            )
-        nav(R.id.browserFragment, directions)
+        val useCase = TrackingProtectionUseCases(
+            sessionManager = requireComponents.core.sessionManager,
+            engine = requireComponents.core.engine
+        )
+        useCase.containsException(session) { contains ->
+            val isEnabled = session.trackerBlockingEnabled && !contains
+            val directions =
+                BrowserFragmentDirections.actionBrowserFragmentToTrackingProtectionPanelDialogFragment(
+                    sessionId = session.id,
+                    url = session.url,
+                    trackingProtectionEnabled = isEnabled,
+                    gravity = getAppropriateLayoutGravity()
+                )
+            nav(R.id.browserFragment, directions)
+        }
     }
 
     override fun getEngineMargins(): Pair<Int, Int> {
@@ -352,9 +358,6 @@ class BrowserFragment : BaseBrowserFragment(), BackHandler {
     }
 
     private fun showTrackingProtectionOnboarding() {
-        if (!FeatureFlags.etpCategories) {
-            return
-        }
         context?.let {
             val layout = LayoutInflater.from(it)
                 .inflate(R.layout.tracking_protection_onboarding_popup, null)
@@ -382,7 +385,7 @@ class BrowserFragment : BaseBrowserFragment(), BackHandler {
             val tpIcon =
                 browserToolbarView
                     .view
-                    .findViewById<AppCompatImageView>(R.id.mozac_browser_toolbar_tracking_protection_icon_view)
+                    .findViewById<AppCompatImageView>(R.id.mozac_browser_toolbar_tracking_protection_indicator)
 
             // Measure layout view
             val spec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)

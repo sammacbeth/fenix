@@ -42,7 +42,6 @@ import java.io.File
 open class FenixApplication : Application() {
     lateinit var fretboard: Fretboard
     lateinit var experimentLoader: Deferred<Boolean>
-    var experimentLoaderComplete: Boolean = false
 
     open val components by lazy { Components(this) }
 
@@ -80,7 +79,7 @@ open class FenixApplication : Application() {
         experimentLoader = loadExperiments()
 
         // Enable the service-experiments component
-        if (settings().isExperimentationEnabled) {
+        if (settings().isExperimentationEnabled && Config.channel.isReleaseOrBeta) {
             Experiments.initialize(
                 applicationContext,
                 mozilla.components.service.experiments.Configuration(
@@ -102,8 +101,6 @@ open class FenixApplication : Application() {
         Experiments.withExperiment("fenix-test-2019-08-05") { branchName ->
             ExperimentsMetrics.activeExperiment.set(branchName)
         }
-
-        ExperimentsManager.initEtpExperiment(this)
 
         setupLeakCanary()
         if (settings().isTelemetryEnabled) {
@@ -141,7 +138,7 @@ open class FenixApplication : Application() {
         // no-op, LeakCanary is disabled by default
     }
 
-    open fun toggleLeakCanary(newValue: Boolean) {
+    open fun updateLeakCanaryState(isEnabled: Boolean) {
         // no-op, LeakCanary is disabled by default
     }
 

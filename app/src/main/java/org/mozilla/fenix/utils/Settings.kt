@@ -77,6 +77,11 @@ class Settings private constructor(
     override val preferences: SharedPreferences =
         appContext.getSharedPreferences(FENIX_PREFERENCES, MODE_PRIVATE)
 
+    var forceEnableZoom by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_accessibility_force_enable_zoom),
+        default = false
+    )
+
     var adjustCampaignId by stringPreference(
         appContext.getPreferenceKey(R.string.pref_key_adjust_campaign),
         default = ""
@@ -184,35 +189,9 @@ class Settings private constructor(
     )
 
     val useStrictTrackingProtection by booleanPreference(
-        appContext.getPreferenceKey(R.string.pref_key_tracking_protection_strict),
+        appContext.getPreferenceKey(R.string.pref_key_tracking_protection_strict_default),
         true
     )
-
-    fun setUseStrictTrackingProtection() {
-        preferences.edit()
-            .putBoolean(
-                appContext.getPreferenceKey(R.string.pref_key_tracking_protection_standard),
-                false
-            )
-            .putBoolean(
-                appContext.getPreferenceKey(R.string.pref_key_tracking_protection_strict),
-                true
-            )
-            .apply()
-    }
-
-    fun setUseStandardTrackingProtection() {
-        preferences.edit()
-            .putBoolean(
-                appContext.getPreferenceKey(R.string.pref_key_tracking_protection_standard),
-                true
-            )
-            .putBoolean(
-                appContext.getPreferenceKey(R.string.pref_key_tracking_protection_strict),
-                false
-            )
-            .apply()
-    }
 
     var shouldDeleteBrowsingDataOnQuit by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_delete_browsing_data_on_quit),
@@ -304,6 +283,11 @@ class Settings private constructor(
 
     var lastPlacesStorageMaintenance by longPreference(
         appContext.getPreferenceKey(R.string.pref_key_last_maintenance),
+        default = 0
+    )
+
+    var totalUriCount by longPreference(
+        appContext.getPreferenceKey(R.string.pref_key_total_uri),
         default = 0
     )
 
