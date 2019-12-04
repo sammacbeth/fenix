@@ -76,6 +76,7 @@ open class FenixApplication : Application() {
 
         // We want to call this function as early as possible, but only once and
         // on the main process, as it uses Gecko to fetch experiments from the server.
+        /*
         experimentLoader = loadExperiments()
 
         // Enable the service-experiments component
@@ -101,6 +102,7 @@ open class FenixApplication : Application() {
         Experiments.withExperiment("fenix-test-2019-08-05") { branchName ->
             ExperimentsMetrics.activeExperiment.set(branchName)
         }
+        */
 
         setupLeakCanary()
         if (settings().isTelemetryEnabled) {
