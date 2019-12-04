@@ -30,7 +30,7 @@ jobs:
       publishLocation: 'Container'
 
 - job: Build_Release
-  condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/v')
+  condition: eq(variables['Build.SourceBranch'], 'master')
 
   pool:
     vmImage: 'macOS 10.13'
