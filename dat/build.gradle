@@ -49,6 +49,5 @@ preBuild.dependsOn(extractAddon)
 clean.dependsOn deleteAddon
 
 dependencies {
-    implementation project(':architecture')
     implementation Deps.mozilla_concept_engine
 }
