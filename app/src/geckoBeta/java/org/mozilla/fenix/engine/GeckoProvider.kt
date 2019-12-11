@@ -10,6 +10,7 @@ import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.utils.Settings
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
+import java.io.File
 
 object GeckoProvider {
     var testConfig: Bundle? = null
@@ -31,12 +32,21 @@ object GeckoProvider {
             builder.extras(it)
                 .remoteDebuggingEnabled(true)
         }
+        // copy config to cache dir
+        val geckoViewConfigPath = "geckoview-config.yaml"
+        val configAssets = context.assets.open(geckoViewConfigPath)
+        val configFile = File(context.cacheDir, geckoViewConfigPath)
+        configFile.createNewFile()
+        configAssets.copyTo(configFile.outputStream())
+        configAssets.close()
 
         val runtimeSettings = builder
             .crashHandler(CrashHandlerService::class.java)
             .useContentProcessHint(true)
             .telemetryDelegate(GeckoAdapter())
             .debugLogging(BuildConfig.DEBUG)
+            .aboutConfigEnabled(true)
+            .configFilePath(configFile.absolutePath)
             .build()
 
         if (!Settings.getInstance(context).shouldUseAutoSize) {
