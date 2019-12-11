@@ -6,9 +6,8 @@ package org.mozilla.fenix.components.metrics
 
 import android.content.Context
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.MainScope
 import mozilla.components.service.glean.BuildConfig
 import mozilla.components.service.glean.Glean
 import mozilla.components.service.glean.config.Configuration
@@ -20,25 +19,29 @@ import org.mozilla.fenix.GleanMetrics.Collections
 import org.mozilla.fenix.GleanMetrics.ContextMenu
 import org.mozilla.fenix.GleanMetrics.CrashReporter
 import org.mozilla.fenix.GleanMetrics.CustomTab
+import org.mozilla.fenix.GleanMetrics.DownloadNotification
 import org.mozilla.fenix.GleanMetrics.ErrorPage
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.FindInPage
 import org.mozilla.fenix.GleanMetrics.History
 import org.mozilla.fenix.GleanMetrics.Library
+import org.mozilla.fenix.GleanMetrics.Logins
 import org.mozilla.fenix.GleanMetrics.MediaNotification
+import org.mozilla.fenix.GleanMetrics.MediaState
 import org.mozilla.fenix.GleanMetrics.Metrics
 import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingMode
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingShortcut
 import org.mozilla.fenix.GleanMetrics.QrScanner
-import org.mozilla.fenix.GleanMetrics.QuickActionSheet
 import org.mozilla.fenix.GleanMetrics.ReaderMode
 import org.mozilla.fenix.GleanMetrics.SearchDefaultEngine
 import org.mozilla.fenix.GleanMetrics.SearchShortcuts
+import org.mozilla.fenix.GleanMetrics.SearchSuggestions
 import org.mozilla.fenix.GleanMetrics.SearchWidget
 import org.mozilla.fenix.GleanMetrics.SyncAccount
 import org.mozilla.fenix.GleanMetrics.SyncAuth
 import org.mozilla.fenix.GleanMetrics.Tab
+import org.mozilla.fenix.GleanMetrics.ToolbarSettings
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.settings
@@ -137,24 +140,6 @@ private val Event.wrapper: EventWrapper<*>?
         is Event.BrowserMenuItemTapped -> EventWrapper(
             { Events.browserMenuAction.record(it) },
             { Events.browserMenuActionKeys.valueOf(it) }
-        )
-        is Event.QuickActionSheetOpened -> EventWrapper<NoExtraKeys>(
-            { QuickActionSheet.opened.record(it) }
-        )
-        is Event.QuickActionSheetClosed -> EventWrapper<NoExtraKeys>(
-            { QuickActionSheet.closed.record(it) }
-        )
-        is Event.QuickActionSheetShareTapped -> EventWrapper<NoExtraKeys>(
-            { QuickActionSheet.shareTapped.record(it) }
-        )
-        is Event.QuickActionSheetBookmarkTapped -> EventWrapper<NoExtraKeys>(
-            { QuickActionSheet.bookmarkTapped.record(it) }
-        )
-        is Event.QuickActionSheetDownloadTapped -> EventWrapper<NoExtraKeys>(
-            { QuickActionSheet.downloadTapped.record(it) }
-        )
-        is Event.QuickActionSheetOpenInAppTapped -> EventWrapper<NoExtraKeys>(
-            { QuickActionSheet.openAppTapped.record(it) }
         )
         is Event.OpenedBookmarkInNewTab -> EventWrapper<NoExtraKeys>(
             { BookmarksManagement.openInNewTab.record(it) }
@@ -391,6 +376,36 @@ private val Event.wrapper: EventWrapper<*>?
         is Event.TabMediaPause -> EventWrapper<NoExtraKeys>(
             { Tab.mediaPause.record(it) }
         )
+        is Event.MediaPlayState -> EventWrapper<NoExtraKeys>(
+            { MediaState.play.record(it) }
+        )
+        is Event.MediaPauseState -> EventWrapper<NoExtraKeys>(
+            { MediaState.pause.record(it) }
+        )
+        is Event.MediaStopState -> EventWrapper<NoExtraKeys>(
+            { MediaState.stop.record(it) }
+        )
+        is Event.InAppNotificationDownloadOpen -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.inAppOpen.record(it) }
+        )
+        is Event.InAppNotificationDownloadTryAgain -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.inAppTryAgain.record(it) }
+        )
+        is Event.NotificationDownloadCancel -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.cancel.record(it) }
+        )
+        is Event.NotificationDownloadOpen -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.open.record(it) }
+        )
+        is Event.NotificationDownloadPause -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.pause.record(it) }
+        )
+        is Event.NotificationDownloadResume -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.resume.record(it) }
+        )
+        is Event.NotificationDownloadTryAgain -> EventWrapper<NoExtraKeys>(
+            { DownloadNotification.tryAgain.record(it) }
+        )
         is Event.NotificationMediaPlay -> EventWrapper<NoExtraKeys>(
             { MediaNotification.play.record(it) }
         )
@@ -420,6 +435,25 @@ private val Event.wrapper: EventWrapper<*>?
             { Events.openedLink.record(it) },
             { Events.openedLinkKeys.valueOf(it) }
         )
+        is Event.OpenLogins -> EventWrapper<NoExtraKeys>(
+            { Logins.openLogins.record(it) }
+        )
+        is Event.OpenOneLogin -> EventWrapper<NoExtraKeys>(
+            { Logins.openIndividualLogin.record(it) }
+        )
+        is Event.CopyLogin -> EventWrapper<NoExtraKeys>(
+            { Logins.copyLogin.record(it) }
+        )
+        is Event.ViewLoginPassword -> EventWrapper<NoExtraKeys>(
+            { Logins.viewPasswordLogin.record(it) }
+        )
+        is Event.PrivateBrowsingShowSearchSuggestions -> EventWrapper<NoExtraKeys>(
+            { SearchSuggestions.enableInPrivate.record(it) }
+        )
+        is Event.ToolbarPositionChanged -> EventWrapper(
+            { ToolbarSettings.changedPosition.record(it) },
+            { ToolbarSettings.changedPositionKeys.valueOf(it) }
+        )
         // Don't record other events in Glean:
         is Event.AddBookmark -> null
         is Event.OpenedBookmark -> null
@@ -435,7 +469,8 @@ class GleanMetricsService(private val context: Context) : MetricsService {
      * We need to keep an eye on when we are done starting so that we don't
      * accidentally stop ourselves before we've ever started.
      */
-    private lateinit var starter: Job
+    private lateinit var gleanInitializer: Job
+    private lateinit var gleanSetStartupMetrics: Job
 
     private val activationPing = ActivationPing(context)
 
@@ -450,7 +485,7 @@ class GleanMetricsService(private val context: Context) : MetricsService {
         // because it calls Google ad APIs that must be called *off* of the main thread.
         // These two things actually happen in parallel, but that should be ok because Glean
         // can handle events being recorded before it's initialized.
-        starter = MainScope().launch {
+        gleanInitializer = MainScope().launch {
             Glean.registerPings(Pings)
             Glean.initialize(context,
                 Configuration(channel = BuildConfig.BUILD_TYPE,
@@ -458,8 +493,11 @@ class GleanMetricsService(private val context: Context) : MetricsService {
                         lazy(LazyThreadSafetyMode.NONE) { context.components.core.client }
                     )))
         }
-
-        setStartupMetrics()
+        // setStartupMetrics is not a fast function. It does not need to be done before we can consider
+        // ourselves initialized. So, let's do it, well, later.
+        gleanSetStartupMetrics = MainScope().launch {
+            setStartupMetrics()
+        }
 
         context.settings().totalUriCount = 0
     }
@@ -473,6 +511,7 @@ class GleanMetricsService(private val context: Context) : MetricsService {
             mozillaProducts.set(MozillaProductDetector.getInstalledMozillaProducts(context))
             adjustCampaign.set(context.settings().adjustCampaignId)
             totalUriCount.set(context.settings().totalUriCount.toString())
+            toolbarPosition.set(context.settings().toolbarSettingString)
         }
 
         SearchDefaultEngine.apply {
@@ -491,10 +530,8 @@ class GleanMetricsService(private val context: Context) : MetricsService {
     }
 
     override fun stop() {
-        /*
-         * We cannot stop until we're done starting.
-         */
-        runBlocking { starter.join(); }
+        gleanInitializer.cancel()
+        gleanSetStartupMetrics.cancel()
         Glean.setUploadEnabled(false)
     }
 

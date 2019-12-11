@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.res.Configuration
 import com.cliqz.dat.DatFeature
 import com.cliqz.privacy.PrivacyFeature
+import io.sentry.Sentry
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -32,13 +33,19 @@ import mozilla.components.feature.customtabs.store.CustomTabsServiceStore
 import mozilla.components.feature.media.MediaFeature
 import mozilla.components.feature.media.RecordingDevicesNotificationFeature
 import mozilla.components.feature.media.state.MediaStateMachine
+import mozilla.components.feature.pwa.ManifestStorage
+import mozilla.components.feature.pwa.WebAppShortcutManager
 import mozilla.components.feature.session.HistoryDelegate
 import mozilla.components.feature.webcompat.WebCompatFeature
+import mozilla.components.lib.dataprotect.SecureAbove22Preferences
+import mozilla.components.lib.dataprotect.generateEncryptionKey
+import mozilla.components.feature.webnotifications.WebNotificationFeature
 import mozilla.components.service.sync.logins.AsyncLoginsStorageAdapter
 import mozilla.components.service.sync.logins.SyncableLoginsStore
 import org.mozilla.fenix.AppRequestInterceptor
 import org.mozilla.fenix.FeatureFlags
-import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.HomeActivity
+import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.test.Mockable
 import java.io.File
@@ -64,7 +71,8 @@ class Core(private val context: Context) {
             automaticFontSizeAdjustment = context.settings().shouldUseAutoSize,
             fontInflationEnabled = context.settings().shouldUseAutoSize,
             suspendMediaWhenInactive = !FeatureFlags.mediaIntegration,
-            allowAutoplayMedia = context.settings().isAutoPlayEnabled
+            allowAutoplayMedia = context.settings().isAutoPlayEnabled,
+            forceUserScalableContent = context.settings().forceEnableZoom
         )
 
         GeckoEngine(context, defaultSettings, GeckoProvider.getOrCreateRuntime(context)).also {
@@ -138,6 +146,9 @@ class Core(private val context: Context) {
                 // media in web content is playing.
                 MediaFeature(context).enable()
             }
+
+            WebNotificationFeature(context, engine, icons, R.drawable.ic_status_logo,
+                HomeActivity::class.java)
         }
     }
 
@@ -145,7 +156,19 @@ class Core(private val context: Context) {
      * Icons component for loading, caching and processing website icons.
      */
     val icons by lazy {
-        BrowserIcons(context, context.components.core.client)
+        BrowserIcons(context, client)
+    }
+
+    /**
+     * Shortcut component for managing shortcuts on the device home screen.
+     */
+    val webAppShortcutManager by lazy {
+        WebAppShortcutManager(
+            context,
+            client,
+            webAppManifestStorage,
+            supportWebApps = FeatureFlags.progressiveWebApps
+        )
     }
 
     /**
@@ -160,7 +183,9 @@ class Core(private val context: Context) {
 
     val permissionStorage by lazy { PermissionStorage(context) }
 
-    val loginsStorage by lazy {
+    val webAppManifestStorage by lazy { ManifestStorage(context) }
+
+    val passwordsStorage by lazy {
         SyncableLoginsStore(
             AsyncLoginsStorageAdapter.forDatabase(
                 File(
@@ -169,9 +194,26 @@ class Core(private val context: Context) {
                 ).canonicalPath
             )
         ) {
-            CompletableDeferred("very-insecure-key")
+            CompletableDeferred(passwordsEncryptionKey)
         }
     }
+
+    /**
+     * Shared Preferences that encrypt/decrypt using Android KeyStore and lib-dataprotect for 23+
+     * otherwise simply stored
+     */
+    fun getSecureAbove22Preferences() = SecureAbove22Preferences(context, KEY_STORAGE_NAME)
+
+    private val passwordsEncryptionKey: String =
+        getSecureAbove22Preferences().getString(PASSWORDS_KEY)
+            ?: generateEncryptionKey(KEY_STRENGTH).also {
+                if (context.settings().passwordsEncryptionKeyGenerated) {
+                    // We already had previously generated an encryption key, but we have lost it
+                    Sentry.capture("Passwords encryption key for passwords storage was lost and we generated a new one")
+                }
+                context.settings().recordPasswordsEncryptionKeyGenerated()
+                getSecureAbove22Preferences().putString(PASSWORDS_KEY, it)
+            }
 
     /**
      * Constructs a [TrackingProtectionPolicy] based on current preferences.
@@ -211,5 +253,11 @@ class Core(private val context: Context) {
             inDark -> PreferredColorScheme.Dark
             else -> PreferredColorScheme.Light
         }
+    }
+
+    companion object {
+        private const val KEY_STRENGTH = 256
+        private const val KEY_STORAGE_NAME = "core_prefs"
+        private const val PASSWORDS_KEY = "passwords"
     }
 }

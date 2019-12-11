@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.ListAdapter
 import org.mozilla.fenix.share.ShareToAppsInteractor
 import org.mozilla.fenix.share.viewholders.AppViewHolder
 
+/**
+ * Adapter for a list of apps that can be shared to.
+ */
 class AppShareAdapter(
     private val interactor: ShareToAppsInteractor
 ) : ListAdapter<AppShareOption, AppViewHolder>(DiffCallback) {
@@ -26,17 +29,24 @@ class AppShareAdapter(
     override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
+
+    private object DiffCallback : DiffUtil.ItemCallback<AppShareOption>() {
+        override fun areItemsTheSame(oldItem: AppShareOption, newItem: AppShareOption) =
+            oldItem.packageName == newItem.packageName
+
+        override fun areContentsTheSame(oldItem: AppShareOption, newItem: AppShareOption) =
+            oldItem == newItem
+    }
 }
 
-private object DiffCallback : DiffUtil.ItemCallback<AppShareOption>() {
-
-    override fun areItemsTheSame(oldItem: AppShareOption, newItem: AppShareOption) =
-        oldItem.packageName == newItem.packageName
-
-    override fun areContentsTheSame(oldItem: AppShareOption, newItem: AppShareOption) =
-        oldItem == newItem
-}
-
+/**
+ * Represents an app that can be shared to.
+ *
+ * @property name Name of the app.
+ * @property icon Icon representing the share target.
+ * @property packageName Package of the app.
+ * @property activityName Activity that will be shared to.
+ */
 data class AppShareOption(
     val name: String,
     val icon: Drawable,

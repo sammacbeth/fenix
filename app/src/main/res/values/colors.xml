@@ -21,6 +21,8 @@
     <color name="disabled_light_theme">#6620123A</color>
     <color name="scrimStart_light_theme">#F515141A</color>
     <color name="scrimEnd_light_theme">#F542414D</color>
+    <color name="dark_grey_90_gradient_start">#FF15141A</color>
+    <color name="dark_grey_90_gradient_end">#0015141A</color>
     <color name="collection_icon_color_violet_light_theme">#7542E5</color>
     <color name="collection_icon_color_blue_light_theme">#0250BB</color>
     <color name="collection_icon_color_pink_light_theme">#E31587</color>
@@ -58,7 +60,7 @@
     <color name="toolbar_start_gradient_dark_theme">@color/foundation_dark_theme</color>
     <color name="toolbar_center_gradient_dark_theme">@color/foundation_dark_theme</color>
     <color name="toolbar_end_gradient_dark_theme">@color/foundation_dark_theme</color>
-    <color name="toolbar_divider_color_dark_theme">#45444D</color>
+    <color name="toolbar_divider_color_dark_theme">@color/neutral_faded_dark_theme</color>
     <color name="fill_link_from_clipboard_dark_theme">@color/accent_on_dark_background_normal_theme</color>
 
     <!-- Private theme color palette -->
@@ -79,7 +81,7 @@
     <color name="disabled_private_theme">#66FBFBFE</color>
     <color name="scrimStart_private_theme">#F520123A</color>
     <color name="scrimEnd_private_theme">#F515141A</color>
-    <color name="snackbar_private_theme">@color/accent_bright_private_theme</color>
+    <color name="snackbar_private_theme">@color/accent_light_theme</color>
     <color name="accent_on_dark_background_private_theme">@color/accent_high_contrast_private_theme</color>
     <color name="toolbar_start_gradient_private_theme">#7529A7</color>
     <color name="toolbar_center_gradient_private_theme">#492E85</color>

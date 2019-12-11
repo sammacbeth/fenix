@@ -10,11 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.PopupWindow
+import androidx.annotation.LayoutRes
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.browser_toolbar_popup_window.view.*
+import kotlinx.android.synthetic.main.component_browser_top_toolbar.view.*
 import mozilla.components.browser.domains.autocomplete.ShippedDomainsProvider
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.toolbar.BrowserToolbar
@@ -24,7 +27,10 @@ import org.jetbrains.anko.dimen
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.FenixSnackbar
 import org.mozilla.fenix.customtabs.CustomTabToolbarMenu
+import org.mozilla.fenix.ext.bookmarkStorage
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.settings
+import org.mozilla.fenix.search.toolbar.setScrollFlagsForTopToolbar
 import org.mozilla.fenix.theme.ThemeManager
 
 interface BrowserToolbarViewInteractor {
@@ -37,6 +43,7 @@ interface BrowserToolbarViewInteractor {
 
 class BrowserToolbarView(
     private val container: ViewGroup,
+    private val shouldUseBottomToolbar: Boolean,
     private val interactor: BrowserToolbarViewInteractor,
     private val customTabSession: Session?
 ) : LayoutContainer {
@@ -44,11 +51,18 @@ class BrowserToolbarView(
     override val containerView: View?
         get() = container
 
-    private val urlBackground = LayoutInflater.from(container.context)
-        .inflate(R.layout.layout_url_background, container, false)
+    private val settings = container.context.settings()
 
-    val view: BrowserToolbar = LayoutInflater.from(container.context)
-        .inflate(R.layout.component_search, container, true)
+    @LayoutRes
+    private val toolbarLayout = when {
+        settings.shouldUseBottomToolbar -> R.layout.component_bottom_browser_toolbar
+        else -> R.layout.component_browser_top_toolbar
+    }
+
+    private val layout = LayoutInflater.from(container.context)
+        .inflate(toolbarLayout, container, true)
+
+    val view: BrowserToolbar = layout
         .findViewById(R.id.toolbar)
 
     val toolbarIntegration: ToolbarIntegration
@@ -114,6 +128,8 @@ class BrowserToolbarView(
             val sessionManager = components.core.sessionManager
 
             view.apply {
+                setScrollFlagsForTopToolbar()
+
                 elevation = TOOLBAR_ELEVATION.dpToFloat(resources.displayMetrics)
 
                 if (!isCustomTabSession) {
@@ -168,12 +184,19 @@ class BrowserToolbarView(
                 )
             } else {
                 DefaultToolbarMenu(
-                    this,
+                    context = this,
                     hasAccountProblem = components.backgroundServices.accountManager.accountNeedsReauth(),
                     requestDesktopStateProvider = {
                         sessionManager.selectedSession?.desktopMode ?: false
                     },
-                    onItemTapped = { interactor.onBrowserToolbarMenuItemTapped(it) }
+                    readerModeStateProvider = {
+                        sessionManager.selectedSession?.readerMode ?: false
+                    },
+                    shouldReverseItems = !shouldUseBottomToolbar,
+                    onItemTapped = { interactor.onBrowserToolbarMenuItemTapped(it) },
+                    lifecycleOwner = container.context as AppCompatActivity,
+                    sessionManager = sessionManager,
+                    bookmarksStorage = bookmarkStorage
                 )
             }
 
@@ -191,9 +214,23 @@ class BrowserToolbarView(
         }
     }
 
+    /**
+     * Returns the correct snackbar anchor for bottom or top toolbar configuration.
+     * A null anchor view is ignored.
+     *
+     * @see #setAnchorView(com.google.android.material.snackbar.BaseTransientBottomBar)
+     */
+    fun getSnackbarAnchor(): View? = if (shouldUseBottomToolbar) view else null
+
     @Suppress("UNUSED_PARAMETER")
     fun update(state: BrowserFragmentState) {
         // Intentionally leaving this as a stub for now since we don't actually want to update currently
+    }
+
+    fun expand() {
+        if (!settings.shouldUseBottomToolbar) {
+            layout.app_bar?.setExpanded(true)
+        }
     }
 
     companion object {

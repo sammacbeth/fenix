@@ -5,6 +5,7 @@
     <string name="pref_key_make_default_browser" translatable="false">pref_key_make_default_browser</string>
     <string name="pref_key_search_settings" translatable="false">pref_key_search_settings</string>
     <string name="pref_key_search_engine" translatable="false">pref_key_search_engine</string>
+    <string name="pref_key_add_search_engine" translatable="false">pref_key_add_Search_engine</string>
     <string name="pref_key_passwords" translatable="false">pref_key_passwords</string>
     <string name="pref_key_credit_cards_addresses" translatable="false">pref_key_credit_cards_addresses</string>
     <string name="pref_key_site_permissions" translatable="false">pref_key_site_permissions</string>
@@ -37,6 +38,7 @@
     <string name="pref_key_account_auth_error" translatable="false">pref_key_account_auth_error</string>
     <string name="pref_key_private_mode" translatable="false">pref_key_private_mode</string>
     <string name="pref_key_theme" translatable="false">pref_key_theme</string>
+    <string name="pref_key_toolbar" translatable="false">pref_key_toolbar</string>
     <string name="pref_key_leakcanary" translatable="false">pref_key_leakcanary</string>
     <string name="pref_key_remote_debugging" translatable="false">pref_key_remote_debugging</string>
     <string name="pref_key_experimentation" translatable="false">pref_key_experimentation</string>
@@ -67,11 +69,15 @@
     <string name="pref_key_search_widget_installed" translatable="false">pref_key_search_widget_installed</string>
 
     <!-- Search Settings -->
+    <string name="pref_key_search_engine_list" translatable="false">pref_key_search_engine_list</string>
     <string name="pref_key_show_search_shortcuts" translatable="false">pref_key_show_search_shortcuts</string>
     <string name="pref_key_show_search_suggestions" translatable="false">pref_key_show_search_suggestions</string>
     <string name="pref_key_show_clipboard_suggestions" translatable="false">pref_key_show_clipboard_suggestions</string>
     <string name="pref_key_search_browsing_history" translatable="false">pref_key_search_browsing_history</string>
     <string name="pref_key_search_bookmarks" translatable="false">pref_key_search_bookmarks</string>
+    <string name="pref_key_show_search_suggestions_in_private" translatable="false">pref_key_show_search_suggestions_in_private</string>
+    <string name="pref_key_show_search_suggestions_in_private_onboarding" translatable="false">pref_key_show_search_suggestions_in_privateonboarding</string>
+
 
     <!-- Site Permissions Settings -->
     <string name="pref_key_optimize" translatable="false">pref_key_optimize</string>
@@ -85,6 +91,10 @@
     <string name="pref_key_phone_feature_notification" translatable="false">pref_key_phone_feature_notification</string>
     <string name="pref_key_category_phone_feature" translatable="false">pref_key_category_phone_feature</string>
     <string name="pref_key_exceptions_clear_site_permissions" translatable="false">pref_key_exceptions_clear_site_permissions</string>
+
+    <!-- Toolbar Settings -->
+    <string name="pref_key_toolbar_top" translatable="false">pref_key_toolbar_top</string>
+    <string name="pref_key_toolbar_bottom" translatable="false">pref_key_toolbar_bottom</string>
 
     <!-- Theme Settings -->
     <string name="pref_key_light_theme" translatable="false">pref_key_light_theme</string>
@@ -104,6 +114,8 @@
     <!-- Logins Settings -->
     <string name="pref_key_saved_logins" translatable="false">pref_key_saved_logins</string>
     <string name="pref_key_password_sync_logins" translatable="false">pref_key_password_sync_logins</string>
+    <string name="pref_key_logins_secure_warning_sync" translatable="false">pref_key_logins_secure_warning_sync</string>
+    <string name="pref_key_logins_secure_warning" translatable="false">pref_key_logins_secure_warning</string>
 
     <!-- Privacy Settings -->
     <string name="pref_key_open_links_in_a_private_tab" translatable="false">pref_key_open_links_in_a_private_tab</string>
@@ -115,4 +127,6 @@
     <string name="pref_key_testing_stage" translatable="false">pref_key_testing_stage</string>
 
     <string name="pref_key_total_uri" translatable="false">pref_key_total_uri</string>
+
+    <string name="pref_key_encryption_key_generated" translatable="false">pref_key_encryption_key_generated</string>
 </resources>

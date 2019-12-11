@@ -5,19 +5,17 @@
 package org.mozilla.fenix.customtabs
 
 import android.app.Activity
-import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.widget.NestedScrollView
 import com.airbnb.lottie.LottieCompositionFactory
 import com.airbnb.lottie.LottieDrawable
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.browser.toolbar.display.DisplayToolbar
 import mozilla.components.feature.customtabs.CustomTabsToolbarFeature
-import mozilla.components.support.base.feature.BackHandler
 import mozilla.components.support.base.feature.LifecycleAwareFeature
+import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.toolbar.ToolbarMenu
 import org.mozilla.fenix.ext.settings
@@ -28,10 +26,9 @@ class CustomTabsIntegration(
     toolbar: BrowserToolbar,
     sessionId: String,
     activity: Activity,
-    quickActionbar: NestedScrollView,
     engineLayout: View,
     onItemTapped: (ToolbarMenu.Item) -> Unit = {}
-) : LifecycleAwareFeature, BackHandler {
+) : LifecycleAwareFeature, UserInteractionHandler {
 
     init {
         // Remove toolbar shadow
@@ -39,21 +36,11 @@ class CustomTabsIntegration(
 
         // Reduce margin height of EngineView from the top for the toolbar
         engineLayout.run {
-            (layoutParams as CoordinatorLayout.LayoutParams).apply {
+            (layoutParams as MarginLayoutParams).apply {
                 val toolbarHeight = resources.getDimension(R.dimen.browser_toolbar_height).toInt()
                 setMargins(0, toolbarHeight, 0, 0)
             }
         }
-
-        // Make the toolbar go to the top.
-        toolbar.run {
-            (layoutParams as CoordinatorLayout.LayoutParams).apply {
-                gravity = Gravity.TOP
-            }
-        }
-
-        // Hide the Quick Action Bar.
-        quickActionbar.visibility = View.GONE
 
         val task = LottieCompositionFactory
             .fromRawRes(

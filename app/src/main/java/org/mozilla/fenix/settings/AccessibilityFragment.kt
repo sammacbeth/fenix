@@ -5,14 +5,13 @@
 package org.mozilla.fenix.settings
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getPreferenceKey
 import org.mozilla.fenix.ext.settings
+import org.mozilla.fenix.ext.showToolbar
 
 /**
  * Displays font size controls for accessibility.
@@ -23,24 +22,20 @@ import org.mozilla.fenix.ext.settings
 class AccessibilityFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
-        (activity as AppCompatActivity).title = getString(R.string.preferences_accessibility)
-        (activity as AppCompatActivity).supportActionBar?.show()
+        showToolbar(getString(R.string.preferences_accessibility))
 
         val forceZoomPreference = findPreference<SwitchPreference>(
             getPreferenceKey(R.string.pref_key_accessibility_force_enable_zoom)
         )
-        forceZoomPreference?.isVisible = FeatureFlags.forceZoomPreference
 
-        if (FeatureFlags.forceZoomPreference) {
-            forceZoomPreference?.setOnPreferenceChangeListener<Boolean> { preference, shouldForce ->
-                val settings = preference.context.settings()
-                val components = preference.context.components
+        forceZoomPreference?.setOnPreferenceChangeListener<Boolean> { preference, shouldForce ->
+            val settings = preference.context.settings()
+            val components = preference.context.components
 
-                settings.forceEnableZoom = shouldForce
-                components.core.engine.settings.forceUserScalableContent = shouldForce
+            settings.forceEnableZoom = shouldForce
+            components.core.engine.settings.forceUserScalableContent = shouldForce
 
-                true
-            }
+            true
         }
 
         val textSizePreference = findPreference<TextPercentageSeekBarPreference>(

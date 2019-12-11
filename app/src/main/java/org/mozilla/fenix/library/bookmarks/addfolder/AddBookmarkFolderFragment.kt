@@ -10,7 +10,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.View.GONE
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
@@ -22,10 +21,13 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mozilla.appservices.places.BookmarkRoot
+import mozilla.components.support.ktx.android.view.hideKeyboard
+import mozilla.components.support.ktx.android.view.showKeyboard
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
+import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.library.bookmarks.BookmarksSharedViewModel
 
 /**
@@ -48,13 +50,12 @@ class AddBookmarkFolderFragment : Fragment(R.layout.fragment_edit_bookmark) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         bookmarkUrlLabel.visibility = GONE
         bookmarkUrlEdit.visibility = GONE
+        bookmarkNameEdit.showKeyboard()
     }
 
     override fun onResume() {
         super.onResume()
-        (activity as AppCompatActivity).title =
-            getString(R.string.bookmark_add_folder_fragment_label)
-        (activity as AppCompatActivity).supportActionBar?.show()
+        showToolbar(getString(R.string.bookmark_add_folder_fragment_label))
 
         lifecycleScope.launch(Main) {
             sharedViewModel.selectedFolder = withContext(IO) {
@@ -76,6 +77,11 @@ class AddBookmarkFolderFragment : Fragment(R.layout.fragment_edit_bookmark) {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        bookmarkNameEdit.hideKeyboard()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.bookmarks_add_folder, menu)
     }
@@ -88,6 +94,7 @@ class AddBookmarkFolderFragment : Fragment(R.layout.fragment_edit_bookmark) {
                         getString(R.string.bookmark_empty_title_error)
                     return true
                 }
+                this.view?.hideKeyboard()
                 lifecycleScope.launch(IO) {
                     val newGuid = requireComponents.core.bookmarksStorage.addFolder(
                         sharedViewModel.selectedFolder!!.guid, bookmarkNameEdit.text.toString(), null

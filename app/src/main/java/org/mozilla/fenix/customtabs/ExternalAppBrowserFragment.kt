@@ -7,31 +7,31 @@ package org.mozilla.fenix.customtabs
 import android.content.Context
 import android.view.Gravity
 import android.view.View
-import androidx.core.view.isGone
 import androidx.navigation.fragment.navArgs
-import kotlinx.android.synthetic.main.component_search.*
+import kotlinx.android.synthetic.main.component_browser_top_toolbar.*
 import kotlinx.android.synthetic.main.fragment_browser.view.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import mozilla.components.browser.session.Session
 import mozilla.components.concept.engine.manifest.WebAppManifestParser
 import mozilla.components.concept.engine.manifest.getOrNull
 import mozilla.components.feature.contextmenu.ContextMenuCandidate
+import mozilla.components.feature.customtabs.CustomTabWindowFeature
 import mozilla.components.feature.pwa.ext.getTrustedScope
 import mozilla.components.feature.pwa.ext.trustedOrigins
+import mozilla.components.feature.pwa.feature.ManifestUpdateFeature
 import mozilla.components.feature.pwa.feature.WebAppActivityFeature
 import mozilla.components.feature.pwa.feature.WebAppHideToolbarFeature
 import mozilla.components.feature.pwa.feature.WebAppSiteControlsFeature
 import mozilla.components.feature.session.TrackingProtectionUseCases
 import mozilla.components.feature.sitepermissions.SitePermissions
 import mozilla.components.lib.state.ext.consumeFrom
-import mozilla.components.support.base.feature.BackHandler
+import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
+import mozilla.components.support.ktx.android.arch.lifecycle.addObservers
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.BaseBrowserFragment
 import org.mozilla.fenix.browser.CustomTabContextMenuCandidate
 import org.mozilla.fenix.browser.FenixSnackbarDelegate
-import org.mozilla.fenix.components.toolbar.BrowserToolbarController
-import org.mozilla.fenix.components.toolbar.BrowserToolbarInteractor
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
@@ -40,11 +40,12 @@ import org.mozilla.fenix.ext.requireComponents
  * Fragment used for browsing the web within external apps.
  */
 @ExperimentalCoroutinesApi
-class ExternalAppBrowserFragment : BaseBrowserFragment(), BackHandler {
+class ExternalAppBrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 
     private val args by navArgs<ExternalAppBrowserFragmentArgs>()
 
     private val customTabsIntegration = ViewBoundFeatureWrapper<CustomTabsIntegration>()
+    private val windowFeature = ViewBoundFeatureWrapper<CustomTabWindowFeature>()
     private val hideToolbarFeature = ViewBoundFeatureWrapper<WebAppHideToolbarFeature>()
 
     @Suppress("LongMethod")
@@ -61,16 +62,25 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), BackHandler {
             customTabSessionId?.let { customTabSessionId ->
                 customTabsIntegration.set(
                     feature = CustomTabsIntegration(
-                        requireComponents.core.sessionManager,
-                        toolbar,
-                        customTabSessionId,
-                        activity,
-                        view.nestedScrollQuickAction,
-                        view.swipeRefresh,
+                        sessionManager = requireComponents.core.sessionManager,
+                        toolbar = toolbar,
+                        sessionId = customTabSessionId,
+                        activity = activity,
+                        engineLayout = view.swipeRefresh,
                         onItemTapped = { browserInteractor.onBrowserToolbarMenuItemTapped(it) }
                     ),
                     owner = this,
                     view = view)
+
+                windowFeature.set(
+                    feature = CustomTabWindowFeature(
+                        activity,
+                        components.core.store,
+                        customTabSessionId
+                    ),
+                    owner = this,
+                    view = view
+                )
 
                 hideToolbarFeature.set(
                     feature = WebAppHideToolbarFeature(
@@ -86,10 +96,18 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), BackHandler {
                 )
 
                 if (manifest != null) {
-                    activity.lifecycle.addObserver(
+                    activity.lifecycle.addObservers(
                         WebAppActivityFeature(
                             activity,
                             components.core.icons,
+                            manifest
+                        ),
+                        ManifestUpdateFeature(
+                            activity.applicationContext,
+                            requireComponents.core.sessionManager,
+                            requireComponents.core.webAppShortcutManager,
+                            requireComponents.core.webAppManifestStorage,
+                            customTabSessionId,
                             manifest
                         )
                     )
@@ -113,7 +131,7 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), BackHandler {
                 }
             }
 
-            consumeFrom(browserStore) {
+            consumeFrom(browserFragmentStore) {
                 browserToolbarView.update(it)
             }
 
@@ -135,11 +153,6 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), BackHandler {
     override fun removeSessionIfNeeded(): Boolean {
         return customTabsIntegration.onBackPressed() || super.removeSessionIfNeeded()
     }
-
-    override fun createBrowserToolbarViewInteractor(
-        browserToolbarController: BrowserToolbarController,
-        session: Session?
-    ) = BrowserToolbarInteractor(browserToolbarController)
 
     override fun navToQuickSettingsSheet(session: Session, sitePermissions: SitePermissions?) {
         val directions = ExternalAppBrowserFragmentDirections
@@ -173,13 +186,8 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), BackHandler {
     }
 
     override fun getEngineMargins(): Pair<Int, Int> {
-        val toolbarHidden = toolbar.isGone
-        return if (toolbarHidden) {
-            0 to 0
-        } else {
-            val toolbarSize = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height)
-            toolbarSize to 0
-        }
+        // Since the top toolbar is dynamic we don't want any margins
+        return 0 to 0
     }
 
     override fun getContextMenuCandidates(

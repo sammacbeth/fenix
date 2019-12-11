@@ -10,8 +10,8 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavDirections
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
@@ -49,6 +49,7 @@ import org.mozilla.fenix.R.string.pref_key_search_settings
 import org.mozilla.fenix.R.string.pref_key_sign_in
 import org.mozilla.fenix.R.string.pref_key_site_permissions
 import org.mozilla.fenix.R.string.pref_key_theme
+import org.mozilla.fenix.R.string.pref_key_toolbar
 import org.mozilla.fenix.R.string.pref_key_tracking_protection_settings
 import org.mozilla.fenix.R.string.pref_key_your_rights
 import org.mozilla.fenix.components.PrivateShortcutCreateManager
@@ -59,6 +60,7 @@ import org.mozilla.fenix.ext.getPreferenceKey
 import org.mozilla.fenix.ext.metrics
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.settings
+import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.settings.account.AccountAuthErrorPreference
 import org.mozilla.fenix.settings.account.AccountPreference
 import org.mozilla.fenix.utils.ItsNotBrokenSnack
@@ -112,9 +114,12 @@ class SettingsFragment : PreferenceFragmentCompat(), AccountObserver {
     override fun onResume() {
         super.onResume()
 
-        (activity as AppCompatActivity).title = getString(R.string.settings_title)
-        (activity as AppCompatActivity).supportActionBar?.show()
+        showToolbar(getString(R.string.settings_title))
 
+        update()
+    }
+
+    private fun update() {
         val trackingProtectionPreference =
             findPreference<Preference>(getPreferenceKey(pref_key_tracking_protection_settings))
         trackingProtectionPreference?.summary = context?.let {
@@ -125,11 +130,15 @@ class SettingsFragment : PreferenceFragmentCompat(), AccountObserver {
             }
         }
 
+        val toolbarPreference =
+            findPreference<Preference>(getPreferenceKey(pref_key_toolbar))
+        toolbarPreference?.summary = context?.settings()?.toolbarSettingString
+
         val themesPreference =
             findPreference<Preference>(getPreferenceKey(pref_key_theme))
         themesPreference?.summary = context?.settings()?.themeSettingString
 
-        val aboutPreference = findPreference<Preference>(getPreferenceKey(R.string.pref_key_about))
+        val aboutPreference = findPreference<Preference>(getPreferenceKey(pref_key_about))
         val appName = getString(R.string.app_name)
         aboutPreference?.title = getString(R.string.preferences_about, appName)
 
@@ -242,6 +251,9 @@ class SettingsFragment : PreferenceFragmentCompat(), AccountObserver {
             resources.getString(pref_key_theme) -> {
                 navigateToThemeSettings()
             }
+            resources.getString(pref_key_toolbar) -> {
+                navigateToToolbarSettings()
+            }
             resources.getString(pref_key_privacy_link) -> {
                 requireContext().let { context ->
                     val intent = SupportUtils.createCustomTabIntent(
@@ -301,75 +313,90 @@ class SettingsFragment : PreferenceFragmentCompat(), AccountObserver {
         }
     }
 
+    private fun navigateFromSettings(directions: NavDirections) {
+        view?.let {
+            val navController = Navigation.findNavController(it)
+            if (navController.currentDestination?.id == R.id.settingsFragment) {
+                navController.navigate(directions)
+            }
+        }
+    }
+
     private fun navigateToLoginsSettingsFragment() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToLoginsFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToSearchEngineSettings() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToSearchEngineFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToTrackingProtectionSettings() {
         val directions =
             SettingsFragmentDirections.actionSettingsFragmentToTrackingProtectionFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToThemeSettings() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToThemeFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
+    }
+
+    private fun navigateToToolbarSettings() {
+        val directions =
+            SettingsFragmentDirections.actionSettingsFragmentToToolbarSettingsFragment()
+        navigateFromSettings(directions)
     }
 
     private fun navigateToSitePermissions() {
         val directions =
             SettingsFragmentDirections.actionSettingsFragmentToSitePermissionsFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToAccessibility() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToAccessibilityFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToDefaultBrowserSettingsFragment() {
         val directions =
             SettingsFragmentDirections.actionSettingsFragmentToDefaultBrowserSettingsFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToDataChoices() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToDataChoicesFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToAbout() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToAboutFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToAccountProblem() {
         val directions = SettingsFragmentDirections.actionSettingsFragmentToAccountProblemFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToAccountSettings() {
         val directions =
             SettingsFragmentDirections.actionSettingsFragmentToAccountSettingsFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToDeleteBrowsingData() {
         val directions =
             SettingsFragmentDirections.actionSettingsFragmentToDeleteBrowsingDataFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     private fun navigateToDeleteBrowsingDataOnQuit() {
         val directions =
             SettingsFragmentDirections.actionSettingsFragmentToDeleteBrowsingDataOnQuitFragment()
-        Navigation.findNavController(view!!).navigate(directions)
+        navigateFromSettings(directions)
     }
 
     override fun onAuthenticated(account: OAuthAccount, authType: AuthType) {

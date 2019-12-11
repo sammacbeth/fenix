@@ -25,6 +25,8 @@ import mozilla.components.feature.push.AutoPushSubscription
 import mozilla.components.feature.push.PushConfig
 import mozilla.components.feature.push.PushSubscriptionObserver
 import mozilla.components.feature.push.PushType
+import mozilla.components.lib.crash.CrashReporter
+import mozilla.components.lib.dataprotect.SecureAbove22Preferences
 import mozilla.components.service.fxa.DeviceConfig
 import mozilla.components.service.fxa.ServerConfig
 import mozilla.components.service.fxa.SyncConfig
@@ -32,7 +34,9 @@ import mozilla.components.service.fxa.SyncEngine
 import mozilla.components.service.fxa.manager.FxaAccountManager
 import mozilla.components.service.fxa.manager.SCOPE_SYNC
 import mozilla.components.service.fxa.sync.GlobalSyncableStoreProvider
+import mozilla.components.service.sync.logins.SyncableLoginsStore
 import mozilla.components.support.base.log.logger.Logger
+import org.mozilla.fenix.Config
 import org.mozilla.fenix.Experiments
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.metrics.Event
@@ -50,8 +54,11 @@ import java.util.FormatFlagsConversionMismatchException
 @Mockable
 class BackgroundServices(
     private val context: Context,
+    crashReporter: CrashReporter,
     historyStorage: PlacesHistoryStorage,
-    bookmarkStorage: PlacesBookmarksStorage
+    bookmarkStorage: PlacesBookmarksStorage,
+    passwordsStorage: SyncableLoginsStore,
+    secureAbove22Preferences: SecureAbove22Preferences
 ) {
     // // A malformed string is causing crashes.
     // This will be removed when the string is fixed. See #5552
@@ -78,15 +85,21 @@ class BackgroundServices(
         // NB: flipping this flag back and worth is currently not well supported and may need hand-holding.
         // Consult with the android-components peers before changing.
         // See https://github.com/mozilla/application-services/issues/1308
-        capabilities = setOf(DeviceCapability.SEND_TAB)
+        capabilities = setOf(DeviceCapability.SEND_TAB),
+
+        // Enable encryption for account state on supported API levels (23+).
+        // Just on Nightly and local builds for now.
+        // Enabling this for all channels is tracked in https://github.com/mozilla-mobile/fenix/issues/6704
+        secureStateAtRest = Config.channel.isNightlyOrDebug
     )
     // If sync has been turned off on the server then disable syncing.
     @VisibleForTesting(otherwise = PRIVATE)
     val syncConfig = if (context.isInExperiment(Experiments.asFeatureSyncDisabled)) {
         null
     } else {
-        // TODO Add Passwords Here Waiting On https://github.com/mozilla-mobile/android-components/issues/4741
-        SyncConfig(setOf(SyncEngine.History, SyncEngine.Bookmarks), syncPeriodInMinutes = 240L) // four hours
+        SyncConfig(
+            setOf(SyncEngine.History, SyncEngine.Bookmarks, SyncEngine.Passwords),
+            syncPeriodInMinutes = 240L) // four hours
     }
 
     private val pushService by lazy { FirebasePush() }
@@ -94,11 +107,11 @@ class BackgroundServices(
     val push by lazy { makePushConfig()?.let { makePush(it) } }
 
     init {
-        // Make the "history", "bookmark", and "logins" stores accessible to workers spawned by the sync manager.
+        // Make the "history", "bookmark", and "passwords" stores accessible to workers spawned by the sync manager.
         GlobalSyncableStoreProvider.configureStore(SyncEngine.History to historyStorage)
         GlobalSyncableStoreProvider.configureStore(SyncEngine.Bookmarks to bookmarkStorage)
-        // TODO Add Passwords Here Waiting On https://github.com/mozilla-mobile/android-components/issues/4741
-        // GlobalSyncableStoreProvider.configureStore(SyncEngine.Passwords to loginsStorage)
+        GlobalSyncableStoreProvider.configureStore(SyncEngine.Passwords to passwordsStorage)
+        GlobalSyncableStoreProvider.configureKeyStorage(secureAbove22Preferences)
     }
 
     private val deviceEventObserver = object : DeviceEventsObserver {
@@ -115,6 +128,8 @@ class BackgroundServices(
         context,
         context.components.analytics.metrics
     )
+
+    val accountAbnormalities = AccountAbnormalities(context, crashReporter)
 
     private val pushAccountObserver by lazy { push?.let { PushAccountObserver(it) } }
 
@@ -166,10 +181,18 @@ class BackgroundServices(
     ).also { accountManager ->
         // TODO this needs to change once we have a SyncManager
         context.settings().fxaHasSyncedItems = syncConfig?.supportedEngines?.isNotEmpty() ?: false
-        accountManager.registerForDeviceEvents(deviceEventObserver, ProcessLifecycleOwner.get(), false)
+        accountManager.registerForDeviceEvents(
+            deviceEventObserver,
+            ProcessLifecycleOwner.get(),
+            false
+        )
 
         // Register a telemetry account observer to keep track of FxA auth metrics.
         accountManager.register(telemetryAccountObserver)
+
+        // Register an "abnormal fxa behaviour" middleware to keep track of events such as
+        // unexpected logouts.
+        accountManager.register(accountAbnormalities)
 
         // Enable push if it's configured.
         push?.let { autoPushFeature ->
@@ -206,7 +229,10 @@ class BackgroundServices(
                 }
             })
         }
-        accountManager.initAsync()
+        accountAbnormalities.accountManagerInitializedAsync(
+            accountManager,
+            accountManager.initAsync()
+        )
     }
 
     /**

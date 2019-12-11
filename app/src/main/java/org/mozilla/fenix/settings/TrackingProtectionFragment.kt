@@ -5,7 +5,6 @@
 package org.mozilla.fenix.settings
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -19,6 +18,7 @@ import org.mozilla.fenix.ext.getPreferenceKey
 import org.mozilla.fenix.ext.metrics
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.settings
+import org.mozilla.fenix.ext.showToolbar
 
 /**
  * Displays the toggle for tracking protection and a button to open
@@ -41,8 +41,7 @@ class TrackingProtectionFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.preference_enhanced_tracking_protection)
-        (activity as AppCompatActivity).supportActionBar?.show()
+        showToolbar(getString(R.string.preference_enhanced_tracking_protection))
 
         // Tracking Protection Switch
         val trackingProtectionKey = getPreferenceKey(R.string.pref_key_tracking_protection)
@@ -89,6 +88,8 @@ class TrackingProtectionFragment : PreferenceFragmentCompat() {
     private fun bindStrict() {
         val keyStrict = getString(R.string.pref_key_tracking_protection_strict_default)
         radioStrict = requireNotNull(findPreference(keyStrict))
+        radioStrict.contentDescription =
+            getString(R.string.preference_enhanced_tracking_protection_strict_info_button)
         radioStrict.onPreferenceChangeListener = object : SharedPreferenceUpdater() {
             override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
                 if (newValue == true) {
@@ -114,6 +115,8 @@ class TrackingProtectionFragment : PreferenceFragmentCompat() {
     private fun bindStandard() {
         val keyStandard = getString(R.string.pref_key_tracking_protection_standard_option)
         radioStandard = requireNotNull(findPreference(keyStandard))
+        radioStandard.contentDescription =
+            getString(R.string.preference_enhanced_tracking_protection_standard_info_button)
         radioStandard.onPreferenceChangeListener = object : SharedPreferenceUpdater() {
             override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
                 if (newValue == true) {

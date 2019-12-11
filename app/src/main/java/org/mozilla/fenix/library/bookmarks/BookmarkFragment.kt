@@ -29,13 +29,14 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mozilla.appservices.places.BookmarkRoot
+import mozilla.components.concept.engine.prompt.ShareData
 import mozilla.components.concept.storage.BookmarkNode
 import mozilla.components.concept.storage.BookmarkNodeType
 import mozilla.components.concept.sync.AccountObserver
 import mozilla.components.concept.sync.AuthType
 import mozilla.components.concept.sync.OAuthAccount
 import mozilla.components.lib.state.ext.consumeFrom
-import mozilla.components.support.base.feature.BackHandler
+import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.FenixSnackbarPresenter
 import org.mozilla.fenix.components.StoreProvider
@@ -44,13 +45,12 @@ import org.mozilla.fenix.ext.bookmarkStorage
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.minus
 import org.mozilla.fenix.ext.nav
-import org.mozilla.fenix.ext.urlToTrimmedHost
+import org.mozilla.fenix.ext.toShortUrl
 import org.mozilla.fenix.library.LibraryPageFragment
-import org.mozilla.fenix.share.ShareTab
 import org.mozilla.fenix.utils.allowUndo
 
 @Suppress("TooManyFunctions", "LargeClass")
-class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), BackHandler {
+class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), UserInteractionHandler {
 
     private lateinit var bookmarkStore: BookmarkFragmentStore
     private lateinit var bookmarkView: BookmarkView
@@ -120,7 +120,6 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), BackHandler {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        activity?.title = getString(R.string.library_bookmarks)
         setHasOptionsMenu(true)
     }
 
@@ -172,11 +171,6 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), BackHandler {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.libraryClose -> {
-                invokePendingDeletion()
-                close()
-                true
-            }
             R.id.add_bookmark_folder -> {
                 navigate(
                     BookmarkFragmentDirections
@@ -202,9 +196,7 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), BackHandler {
                 val bookmark = bookmarkStore.state.mode.selectedItems.first()
                 navigate(
                     BookmarkFragmentDirections.actionBookmarkFragmentToShareFragment(
-                        url = bookmark.url,
-                        title = bookmark.title,
-                        tabs = arrayOf(ShareTab(bookmark.url.orEmpty(), bookmark.title.orEmpty()))
+                        data = arrayOf(ShareData(url = bookmark.url, title = bookmark.title))
                     )
                 )
                 true
@@ -262,7 +254,7 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), BackHandler {
         bookmarkInteractor.onBookmarksChanged(bookmarkTree)
 
         val deleteOperation: (suspend () -> Unit) = {
-            deleteSelectedBookmarks(selected)
+            deleteSelectedBookmarks(pendingBookmarksToDelete)
             pendingBookmarkDeletionJob = null
             // Since this runs in a coroutine, we can't depend upon the fragment still being attached
             metrics?.track(Event.RemoveBookmarks)
@@ -280,7 +272,7 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), BackHandler {
                 val bookmarkNode = selected.first()
                 getString(
                     R.string.bookmark_deletion_snackbar_message,
-                    bookmarkNode.url?.urlToTrimmedHost(context!!) ?: bookmarkNode.title
+                    bookmarkNode.url?.toShortUrl(context!!.components.publicSuffixList) ?: bookmarkNode.title
                 )
             }
             else -> throw IllegalStateException("Illegal event type in onDeleteSome")

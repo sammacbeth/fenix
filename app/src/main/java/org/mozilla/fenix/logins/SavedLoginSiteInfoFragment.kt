@@ -7,13 +7,16 @@ package org.mozilla.fenix.logins
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
+import android.view.WindowManager
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_saved_login_site_info.*
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.FenixSnackbar
+import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.showToolbar
 
 class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_info) {
     private val safeArguments get() = requireNotNull(arguments)
@@ -24,6 +27,15 @@ class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_i
         ).savedLoginItem
     }
 
+    override fun onPause() {
+        // If we pause this fragment, we want to pop users back to reauth
+        if (findNavController().currentDestination?.id != R.id.savedLoginsFragment) {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            findNavController().popBackStack(R.id.loginsFragment, false)
+        }
+        super.onPause()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -32,6 +44,7 @@ class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_i
             val clipboard = view.context.components.clipboardHandler
             clipboard.text = savedLoginItem.url
             showCopiedSnackbar(getString(R.string.logins_site_copied))
+            context?.components?.analytics?.metrics?.track(Event.CopyLogin)
         }
 
         usernameInfoText.text = savedLoginItem.userName
@@ -39,6 +52,7 @@ class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_i
             val clipboard = view.context.components.clipboardHandler
             clipboard.text = savedLoginItem.userName
             showCopiedSnackbar(getString(R.string.logins_username_copied))
+            context?.components?.analytics?.metrics?.track(Event.CopyLogin)
         }
 
         passwordInfoText.inputType =
@@ -51,6 +65,7 @@ class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_i
             val clipboard = view.context.components.clipboardHandler
             clipboard.text = savedLoginItem.password
             showCopiedSnackbar(getString(R.string.logins_password_copied))
+            context?.components?.analytics?.metrics?.track(Event.CopyLogin)
         }
     }
 
@@ -62,6 +77,7 @@ class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_i
 
     private fun togglePasswordReveal() {
         if (passwordInfoText.inputType == InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT) {
+            context?.components?.analytics?.metrics?.track(Event.ViewLoginPassword)
             revealPasswordItem.setImageDrawable(context?.getDrawable(R.drawable.ic_password_hide))
             passwordInfoText.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
             revealPasswordItem.contentDescription =
@@ -79,7 +95,10 @@ class SavedLoginSiteInfoFragment : Fragment(R.layout.fragment_saved_login_site_i
 
     override fun onResume() {
         super.onResume()
-        activity?.title = savedLoginItem.url
-        (activity as AppCompatActivity).supportActionBar?.show()
+        activity?.window?.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+        showToolbar(savedLoginItem.url)
     }
 }

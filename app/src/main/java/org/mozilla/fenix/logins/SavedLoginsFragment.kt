@@ -8,21 +8,23 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
+import android.view.WindowManager
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.android.synthetic.main.fragment_saved_logins.view.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mozilla.components.lib.state.ext.consumeFrom
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.StoreProvider
+import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.showToolbar
 
 class SavedLoginsFragment : Fragment() {
     private lateinit var savedLoginsStore: SavedLoginsFragmentStore
@@ -31,8 +33,11 @@ class SavedLoginsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.preferences_passwords_saved_logins)
-        (activity as AppCompatActivity).supportActionBar?.show()
+        activity?.window?.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+        showToolbar(getString(R.string.preferences_passwords_saved_logins))
     }
 
     override fun onCreateView(
@@ -50,7 +55,7 @@ class SavedLoginsFragment : Fragment() {
         }
         savedLoginsInteractor = SavedLoginsInteractor(::itemClicked)
         savedLoginsView = SavedLoginsView(view.savedLoginsLayout, savedLoginsInteractor)
-        loadAndMapLogins()
+        lifecycleScope.launch(Main) { loadAndMapLogins() }
         return view
     }
 
@@ -63,28 +68,34 @@ class SavedLoginsFragment : Fragment() {
         }
     }
 
+    /**
+     * If we pause this fragment, we want to pop users back to reauth
+     */
+    override fun onPause() {
+        if (findNavController().currentDestination?.id != R.id.savedLoginSiteInfoFragment) {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            findNavController().popBackStack(R.id.loginsFragment, false)
+        }
+        super.onPause()
+    }
+
     private fun itemClicked(item: SavedLoginsItem) {
+        context?.components?.analytics?.metrics?.track(Event.OpenOneLogin)
         val directions =
             SavedLoginsFragmentDirections.actionSavedLoginsFragmentToSavedLoginSiteInfoFragment(item)
         findNavController().navigate(directions)
     }
 
-    private fun loadAndMapLogins() {
-        lifecycleScope.launch(IO) {
-            val syncedLogins = async {
-                context!!.components.core.loginsStorage.withUnlocked {
-                    it.list().await().map { item ->
-                        SavedLoginsItem(
-                            item.hostname,
-                            item.username,
-                            item.password
-                        )
-                    }
+    private suspend fun loadAndMapLogins() {
+        val syncedLogins = withContext(IO) {
+            requireContext().components.core.passwordsStorage.withUnlocked {
+                it.list().await().map { item ->
+                    SavedLoginsItem(item.hostname, item.username, item.password)
                 }
-            }.await()
-            launch(Dispatchers.Main) {
-                savedLoginsStore.dispatch(SavedLoginsFragmentAction.UpdateLogins(syncedLogins))
             }
+        }
+        withContext(Main) {
+            savedLoginsStore.dispatch(SavedLoginsFragmentAction.UpdateLogins(syncedLogins))
         }
     }
 }

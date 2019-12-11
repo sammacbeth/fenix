@@ -10,7 +10,9 @@ import mozilla.components.browser.search.SearchEngine
 import mozilla.components.browser.toolbar.facts.ToolbarFacts
 import mozilla.components.feature.contextmenu.facts.ContextMenuFacts
 import mozilla.components.feature.customtabs.CustomTabsFacts
+import mozilla.components.feature.downloads.facts.DownloadsFacts
 import mozilla.components.feature.findinpage.facts.FindInPageFacts
+import mozilla.components.feature.media.facts.MediaFacts
 import mozilla.components.support.base.Component
 import mozilla.components.support.base.facts.Action
 import mozilla.components.support.base.facts.Fact
@@ -25,6 +27,7 @@ import org.mozilla.fenix.GleanMetrics.ErrorPage
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.Library
 import org.mozilla.fenix.GleanMetrics.SearchShortcuts
+import org.mozilla.fenix.GleanMetrics.ToolbarSettings
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.R
 import java.util.Locale
@@ -50,12 +53,6 @@ sealed class Event {
     object AddBookmarkFolder : Event()
     object RemoveBookmarkFolder : Event()
     object RemoveBookmarks : Event()
-    object QuickActionSheetOpened : Event()
-    object QuickActionSheetClosed : Event()
-    object QuickActionSheetShareTapped : Event()
-    object QuickActionSheetBookmarkTapped : Event()
-    object QuickActionSheetDownloadTapped : Event()
-    object QuickActionSheetOpenInAppTapped : Event()
     object CustomTabsClosed : Event()
     object CustomTabsActionTapped : Event()
     object CustomTabsMenuOpened : Event()
@@ -119,6 +116,16 @@ sealed class Event {
     object PrivateBrowsingStaticShortcutPrivateTab : Event()
     object TabMediaPlay : Event()
     object TabMediaPause : Event()
+    object MediaPlayState : Event()
+    object MediaPauseState : Event()
+    object MediaStopState : Event()
+    object InAppNotificationDownloadOpen : Event()
+    object InAppNotificationDownloadTryAgain : Event()
+    object NotificationDownloadCancel : Event()
+    object NotificationDownloadOpen : Event()
+    object NotificationDownloadPause : Event()
+    object NotificationDownloadResume : Event()
+    object NotificationDownloadTryAgain : Event()
     object NotificationMediaPlay : Event()
     object NotificationMediaPause : Event()
     object TrackingProtectionTrackerList : Event()
@@ -126,11 +133,16 @@ sealed class Event {
     object TrackingProtectionSettingsPanel : Event()
     object TrackingProtectionSettings : Event()
     object TrackingProtectionException : Event()
+    object OpenLogins : Event()
+    object OpenOneLogin : Event()
+    object CopyLogin : Event()
+    object ViewLoginPassword : Event()
+    object PrivateBrowsingShowSearchSuggestions : Event()
 
     // Interaction events with extras
 
     data class PreferenceToggled(val preferenceKey: String, val enabled: Boolean, val context: Context) : Event() {
-        private val switchPreferenceTelemetryAllowList = listOf(
+        private val booleanPreferenceTelemetryAllowList = listOf(
             context.getString(R.string.pref_key_show_search_suggestions),
             context.getString(R.string.pref_key_remote_debugging),
             context.getString(R.string.pref_key_telemetry),
@@ -139,7 +151,11 @@ sealed class Event {
             context.getString(R.string.pref_key_search_browsing_history),
             context.getString(R.string.pref_key_show_clipboard_suggestions),
             context.getString(R.string.pref_key_show_search_shortcuts),
-            context.getString(R.string.pref_key_open_links_in_a_private_tab)
+            context.getString(R.string.pref_key_open_links_in_a_private_tab),
+            context.getString(R.string.pref_key_sync_logins),
+            context.getString(R.string.pref_key_sync_bookmarks),
+            context.getString(R.string.pref_key_sync_history),
+            context.getString(R.string.pref_key_show_search_suggestions_in_private)
         )
 
         override val extras: Map<Events.preferenceToggledKeys, String>?
@@ -150,8 +166,14 @@ sealed class Event {
 
         init {
             // If the event is not in the allow list, we don't want to track it
-            if (!switchPreferenceTelemetryAllowList.contains(preferenceKey)) { throw IllegalArgumentException() }
+            require(booleanPreferenceTelemetryAllowList.contains(preferenceKey))
         }
+    }
+
+    data class ToolbarPositionChanged(val position: Position) : Event() {
+        enum class Position { TOP, BOTTOM }
+        override val extras: Map<ToolbarSettings.changedPositionKeys, String>?
+            get() = hashMapOf(ToolbarSettings.changedPositionKeys.position to position.name)
     }
 
     data class OpenedLink(val mode: Mode) : Event() {
@@ -222,8 +244,16 @@ sealed class Event {
 
     data class PerformedSearch(val eventSource: EventSource) : Event() {
         sealed class EngineSource {
-            data class Default(val engine: SearchEngine) : EngineSource()
-            data class Shortcut(val engine: SearchEngine) : EngineSource()
+            abstract val engine: SearchEngine
+            abstract val isCustom: Boolean
+
+            data class Default(override val engine: SearchEngine, override val isCustom: Boolean) : EngineSource()
+            data class Shortcut(override val engine: SearchEngine, override val isCustom: Boolean) : EngineSource()
+
+            // https://github.com/mozilla-mobile/fenix/issues/1607
+            // Sanitize identifiers for custom search engines.
+            val identifier: String
+                get() = if (isCustom) "custom" else engine.identifier
 
             val searchEngine: SearchEngine
                 get() = when (this) {
@@ -255,7 +285,7 @@ sealed class Event {
                 }
 
             val countLabel: String
-                get() = "${source.searchEngine.identifier.toLowerCase(Locale.ROOT)}.$label"
+                get() = "${source.identifier.toLowerCase(Locale.getDefault())}.$label"
 
             val sourceLabel: String
                 get() = "${source.descriptor}.$label"
@@ -300,7 +330,8 @@ sealed class Event {
         enum class Item {
             SETTINGS, LIBRARY, HELP, DESKTOP_VIEW_ON, DESKTOP_VIEW_OFF, FIND_IN_PAGE, NEW_TAB,
             NEW_PRIVATE_TAB, SHARE, REPORT_SITE_ISSUE, BACK, FORWARD, RELOAD, STOP, OPEN_IN_FENIX,
-            SAVE_TO_COLLECTION, ADD_TO_HOMESCREEN, QUIT
+            SAVE_TO_COLLECTION, ADD_TO_HOMESCREEN, QUIT, READER_MODE_ON, READER_MODE_OFF, OPEN_IN_APP,
+            BOOKMARK, READER_MODE_APPEARANCE
         }
 
         override val extras: Map<Events.browserMenuActionKeys, String>?
@@ -328,14 +359,29 @@ private fun Fact.toEvent(): Event? = when (Pair(component, item)) {
     Component.FEATURE_CUSTOMTABS to CustomTabsFacts.Items.CLOSE -> Event.CustomTabsClosed
     Component.FEATURE_CUSTOMTABS to CustomTabsFacts.Items.ACTION_BUTTON -> Event.CustomTabsActionTapped
 
-    Component.FEATURE_MEDIA to "notification" -> {
+    Component.FEATURE_DOWNLOADS to DownloadsFacts.Items.NOTIFICATION -> {
         when (action) {
-            Action.PLAY -> {
-                Event.NotificationMediaPlay
-            }
-            Action.PAUSE -> {
-                Event.NotificationMediaPause
-            }
+            Action.CANCEL -> Event.NotificationDownloadCancel
+            Action.OPEN -> Event.NotificationDownloadOpen
+            Action.PAUSE -> Event.NotificationDownloadPause
+            Action.RESUME -> Event.NotificationDownloadResume
+            Action.TRY_AGAIN -> Event.NotificationDownloadTryAgain
+            else -> null
+        }
+    }
+
+    Component.FEATURE_MEDIA to MediaFacts.Items.NOTIFICATION -> {
+        when (action) {
+            Action.PLAY -> Event.NotificationMediaPlay
+            Action.PAUSE -> Event.NotificationMediaPause
+            else -> null
+        }
+    }
+    Component.FEATURE_MEDIA to MediaFacts.Items.STATE -> {
+        when (action) {
+            Action.PLAY -> Event.MediaPlayState
+            Action.PAUSE -> Event.MediaPauseState
+            Action.STOP -> Event.MediaStopState
             else -> null
         }
     }

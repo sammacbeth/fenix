@@ -2,6 +2,11 @@
 <resources>
 
 
+    <!-- App name for private browsing mode, only the "Private" portion should be localized. -->
+    <string name="app_name_private_2">Firefox Preview privé</string>
+
+    <!-- App name for private browsing mode, only the "Private" portion should be localized. -->
+    <string name="app_name_private_3">Firefox Preview (Nav. privée)</string>
     <!-- Home Fragment -->
     <!-- Content description (not visible, for screen readers etc.): "Three dot" menu button. -->
     <string name="content_description_menu">Plus d’options</string>
@@ -13,8 +18,7 @@
     <string name="search_hint">Recherche ou adresse</string>
 
     <!-- No Open Tabs Message Header -->
-    <string name="no_open_tabs_header">Aucun onglet ouvert</string>
-
+    <string name="no_open_tabs_header_2">Aucun onglet ouvert</string>
     <!-- No Open Tabs Message Description -->
     <string name="no_open_tabs_description">Vos onglets ouverts seront affichés ici.</string>
 
@@ -53,6 +57,10 @@
     <string name="browser_menu_refresh">Actualiser</string>
     <!-- Content description (not visible, for screen readers etc.): Stop loading current website -->
     <string name="browser_menu_stop">Arrêter</string>
+    <!-- Content description (not visible, for screen readers etc.): Bookmark the current page -->
+    <string name="browser_menu_bookmark">Marque-page</string>
+    <!-- Content description (not visible, for screen readers etc.): Un-bookmark the current page -->
+    <string name="browser_menu_edit_bookmark">Modifier le marque-page</string>
     <!-- Browser menu button that sends a user to help articles -->
     <string name="browser_menu_help">Aide</string>
     <!-- Browser menu button that sends a to a the what's new article -->
@@ -87,6 +95,16 @@
         The first parameter is the name of the app defined in app_name (for example: Fenix) -->
     <string name="browser_menu_powered_by">FONCTIONNE GRÂCE À %1$s</string>
 
+    <!-- Browser menu text shown in custom tabs to indicate this is a Fenix tab
+        The first parameter is the name of the app defined in app_name (for example: Fenix) -->
+    <string name="browser_menu_powered_by2">Fonctionne grâce à %1$s</string>
+    <!-- Browser menu button to put the the current page in reader mode -->
+    <string name="browser_menu_read">Mode lecture</string>
+    <!-- Browser menu button to open the current page in an external app -->
+    <string name="browser_menu_open_app_link">Ouvrir dans une application</string>
+    <!-- Browser menu button to configure reader mode appearance e.g. the used font type and size -->
+    <string name="browser_menu_read_appearance">Apparence</string>
+
     <!-- Search Fragment -->
     <!-- Button in the search view that lets a user search by scanning a QR code -->
     <string name="search_scan_button">Scanner</string>
@@ -99,6 +117,17 @@
 
     <!-- Button in the search view that lets a user navigate to the site in their clipboard -->
     <string name="awesomebar_clipboard_title">Remplir depuis le presse-papiers</string>
+
+    <!-- Button in the search suggestions onboarding that allows search suggestions in private sessions -->
+    <string name="search_suggestions_onboarding_allow_button">Autoriser</string>
+    <!-- Button in the search suggestions onboarding that does not allow search suggestions in private sessions -->
+    <string name="search_suggestions_onboarding_do_not_allow_button">Ne pas autoriser</string>
+    <!-- Search suggestion onboarding hint title text -->
+    <string name="search_suggestions_onboarding_title">Autoriser les suggestions de recherche dans les sessions privées ?</string>
+    <!-- Search suggestion onboarding hint description text, first parameter is the name of the app defined in app_name (for example: Fenix)-->
+    <string name="search_suggestions_onboarding_text">%s enverra tout ce que vous saisirez dans la barre d’adresse à votre moteur de recherche par défaut.</string>
+    <!-- Search suggestion onboarding hint Learn more link text -->
+    <string name="search_suggestions_onboarding_learn_more_link">En savoir plus</string>
 
     <!-- Search Widget -->
     <!-- Text preview for smaller sized widgets -->
@@ -118,6 +147,8 @@
     <string name="preferences_default_search_engine">Moteur de recherche par défaut</string>
     <!-- Preference for settings related to Search -->
     <string name="preferences_search">Recherche</string>
+    <!-- Preference for settings related to Search address bar -->
+    <string name="preferences_search_address_bar">Barre d’adresse</string>
     <!-- Preference linking to help about Fenix -->
     <string name="preferences_help">Aide</string>
     <!-- Preference link to rating Fenix on the Play Store -->
@@ -151,6 +182,8 @@
     <string name="preferences_category_account">Compte</string>
     <!-- Preference shown on banner to sign into account -->
     <string name="preferences_sign_in">Connexion</string>
+    <!-- Preference for changing where the toolbar is positioned -->
+    <string name="preferences_toolbar">Barre d’outils</string>
     <!-- Preference for changing default theme to dark or light mode -->
     <string name="preferences_theme">Thème</string>
     <!-- Preference description for banner about signing in -->
@@ -175,6 +208,8 @@
     <string name="preferences_show_search_shortcuts">Afficher les raccourcis de recherche</string>
     <!-- Preference title for switch preference to show search suggestions -->
     <string name="preferences_show_search_suggestions">Afficher les suggestions de recherche</string>
+    <!-- Preference title for switch preference to show search suggestions also in private mode -->
+    <string name="preferences_show_search_suggestions_in_private">Afficher au cours des sessions de navigation privée</string>
     <!-- Preference title for switch preference to show a clipboard suggestion when searching -->
     <string name="preferences_show_clipboard_suggestions">Afficher les suggestions du presse-papiers</string>
     <!-- Preference title for switch preference to suggest browsing history when searching -->
@@ -293,6 +328,12 @@
     <!-- Button to cancel pairing -->
     <string name="pair_cancel">Annuler</string>
 
+    <!-- Toolbar Preferences -->
+    <!-- Preference for using top toolbar -->
+    <string name="preference_top_toolbar">En haut</string>
+    <!-- Preference for using bottom toolbar -->
+    <string name="preference_bottom_toolbar">En bas</string>
+
     <!-- Theme Preferences -->
     <!-- Preference for using light theme -->
     <string name="preference_light_theme">Clair</string>
@@ -302,27 +343,6 @@
     <string name="preference_auto_battery_theme">Défini par l’économie d’énergie de la batterie</string>
     <!-- Preference for using following device theme -->
     <string name="preference_follow_device_theme">Suivre le thème de l’appareil</string>
-
-    <!-- Quick Action Sheet -->
-    <!-- Button in the browser chrome to share the current page -->
-    <string name="quick_action_share">Partager</string>
-    <!-- Button in the browser chrome to download the current page -->
-    <string name="quick_action_download">Télécharger</string>
-    <!-- Button in the browser chrome in the browser to bookmark the current page -->
-    <string name="quick_action_bookmark">Marquer cette page</string>
-    <!-- Button in the browser chrome in the browser to edit the bookmark of the current page -->
-    <string name="quick_action_bookmark_edit">Modifier le marque-page</string>
-    <!-- Button in the browser chrome in the browser to put the the current page in reader mode -->
-    <string name="quick_action_read">Lire</string>
-    <!-- Button in the browser chrome to exit reader mode -->
-    <string name="quick_action_read_close">Fermer</string>
-    <!-- Button in the browser chrome to open the current page in an external app -->
-    <string name="quick_action_open_app_link">Ouvrir dans une application</string>
-    <!-- Button in the browser chrome to configure reader mode appearance e.g. the used font type and size -->
-    <string name="quick_action_read_appearance">Apparence</string>
-    <!-- Content description (not visible, for screen readers etc.): Quick action sheet handle to provide users
-        with shortcuts to commonly used actions such as Share, Bookmark etc.. -->
-    <string name="quick_action_sheet_handle">Actions rapides</string>
 
     <!-- Library -->
     <!-- Option in Library to open Sessions page -->
@@ -361,10 +381,14 @@
     <string name="tab_header_label">Onglets ouverts</string>
     <!-- Title for the list of tabs in the current private session -->
     <string name="tabs_header_private_title">Session privée</string>
+    <!-- Title for the list of tabs in the current private session -->
+    <string name="tabs_header_private_tabs_title">Onglets privés</string>
     <!-- Content description (not visible, for screen readers etc.): Add tab button. Adds a news tab when pressed -->
     <string name="add_tab">Ajouter un onglet</string>
     <!-- Content description (not visible, for screen readers etc.): Close tab button. Closes the current session when pressed -->
     <string name="close_tab">Fermer l’onglet</string>
+    <!-- Content description (not visible, for screen readers etc.): Close tab <title> button. First parameter is tab title  -->
+    <string name="close_tab_title">Fermer l’onglet %s</string>
     <!-- Content description (not visible, for screen readers etc.): Opens the open tabs menu when pressed -->
     <string name="open_tabs_menu">Ouvrir le menu des onglets</string>
     <!-- Open tabs menu item to close all tabs -->
@@ -659,10 +683,14 @@
     <string name="notification_pbm_channel_name">Session de navigation privée</string>
     <!-- Text shown in the notification that pops up to remind the user that a private browsing session is active. -->
     <string name="notification_pbm_delete_text">Supprimer les onglets privés</string>
+    <!-- Text shown in the notification that pops up to remind the user that a private browsing session is active. -->
+    <string name="notification_pbm_delete_text_2">Fermer les onglets privés</string>
     <!-- Notification action to open Fenix and resume the current browsing session. -->
     <string name="notification_pbm_action_open">Ouvrir</string>
     <!-- Notification action to delete all current private browsing sessions AND switch to Fenix (bring it to the foreground) -->
     <string name="notification_pbm_action_delete_and_open">Supprimer et ouvrir</string>
+    <!-- Name of the "Powered by Fenix" notification channel. Displayed in the "App notifications" system settings for the app -->
+    <string name="notification_powered_by_channel_name">Fonctionne grâce à</string>
     <!-- Text shown in snackbar when user deletes a collection -->
     <string name="snackbar_collection_deleted">Collection supprimée</string>
 
@@ -686,6 +714,10 @@
     <!-- Text for action to undo deleting a tab or collection shown in snackbar -->
     <string name="snackbar_deleted_undo">ANNULER</string>
 
+    <!-- Text for action to undo deleting a tab or collection shown in a11y dialog -->
+    <string name="a11y_dialog_deleted_undo">Annuler</string>
+    <!-- Text for action to confirm deleting a tab or collection shown in a11y dialog -->
+    <string name="a11y_dialog_deleted_confirm">Confirmer</string>
     <!-- QR code scanner prompt which appears after scanning a code, but before navigating to it
         First parameter is the name of the app, second parameter is the URL or text scanned-->
     <string name="qr_scanner_confirmation_dialog_message">Autoriser %1$s à ouvrir %2$s</string>
@@ -893,6 +925,8 @@
     <string name="preference_enhanced_tracking_protection_standard_description">Équilibré entre la protection et la performance.</string>
     <!-- Preference description for enhanced tracking protection for the standard protection settings -->
     <string name="preference_enhanced_tracking_protection_standard_description_2">Les pages se chargeront normalement, mais bloqueront moins de traqueurs.</string>
+    <!--  Accessibility text for the Standard protection information icon  -->
+    <string name="preference_enhanced_tracking_protection_standard_info_button">Ce qui est bloqué par la protection standard contre le pistage</string>
     <!-- Preference for enhanced tracking protection for the strict protection settings -->
     <string name="preference_enhanced_tracking_protection_strict">Strict</string>
     <!-- Preference for enhanced tracking protection for the strict protection settings, default setting -->
@@ -903,6 +937,8 @@
     <string name="preference_enhanced_tracking_protection_strict_recommended">Strict (recommandé)</string>
     <!-- Preference description for enhanced tracking protection for the strict protection settings -->
     <string name="preference_enhanced_tracking_protection_strict_description">Protection renforcée, mais certains sites ou contenus peuvent être endommagés.</string>
+    <!--  Accessibility text for the Strict protection information icon  -->
+    <string name="preference_enhanced_tracking_protection_strict_info_button">Ce qui est bloqué par la protection stricte contre le pistage</string>
     <!-- Header for categories that are being blocked by current Enhanced Tracking Protection settings -->
     <string name="enhanced_tracking_protection_blocked">Bloqués</string>
     <!-- Header for categories that are being not being blocked by current Enhanced Tracking Protection settings -->
@@ -957,6 +993,9 @@
     <string name="browser_toolbar_long_press_popup_paste_and_go">Coller et ouvrir</string>
     <!-- Paste the text in the clipboard -->
     <string name="browser_toolbar_long_press_popup_paste">Coller</string>
+  
+    <!-- Snackbar message shown after an URL has been copied to clipboard. -->
+    <string name="browser_toolbar_url_copied_to_clipboard_snackbar">Adresse copiée dans le presse-papiers</string>
   
     <!-- Title text for the Add To Homescreen dialog -->
     <string name="add_to_homescreen_title">Ajouter à l’écran d’accueil</string>
@@ -1037,4 +1076,61 @@
     <string name="saved_login_reveal_password">Afficher le mot de passe</string>
     <!-- Content Description (for screenreaders etc) read for the button to hide a password in logins -->
     <string name="saved_login_hide_password">Masquer le mot de passe</string>
+    <!-- Message displayed in biometric prompt displayed for authentication before allowing users to view their logins -->
+    <string name="logins_biometric_prompt_message">Déverrouillez pour afficher vos identifiants enregistrés</string>
+    <!-- Title of warning dialog if users have no device authentication set up -->
+    <string name="logins_warning_dialog_title">Protégez vos identifiants et mots de passe</string>
+    <!-- Message of warning dialog if users have no device authentication set up -->
+    <string name="logins_warning_dialog_message">Configurez un schéma de verrouillage, un code PIN ou un mot de passe pour protéger vos identifiants de connexion et mots de passe enregistrés pour le cas où quelqu’un accède à votre appareil.</string>
+    <!-- Negative button to ignore warning dialog if users have no device authentication set up -->
+    <string name="logins_warning_dialog_later">Plus tard</string>
+    <!-- Positive button to send users to set up a pin of warning dialog if users have no device authentication set up -->
+    <string name="logins_warning_dialog_set_up_now">Configurer maintenant</string>
+    <!-- Title of PIN verification dialog to direct users to re-enter their device credentials to access their logins -->
+    <string name="logins_biometric_prompt_message_pin">Déverrouillez votre appareil</string>
+    <!-- Title for Accessibility Force Enable Zoom Preference -->
+    <string name="preference_accessibility_force_enable_zoom">Zoom pour tous les sites</string>
+    <!-- Summary for Accessibility Force Enable Zoom Preference -->
+    <string name="preference_accessibility_force_enable_zoom_summary">Activer pour permettre de zoomer avec deux doigts même sur les sites web qui empêchent ce geste.</string>
+
+    <!-- Title of the Add search engine screen -->
+    <string name="search_engine_add_custom_search_engine_title">Ajouter un moteur de recherche</string>
+    <!-- Title of the Edit search engine screen -->
+    <string name="search_engine_edit_custom_search_engine_title">Modifier le moteur de recherche</string>
+    <!-- Content description (not visible, for screen readers etc.): Title for the button to add a search engine in the action bar -->
+    <string name="search_engine_add_button_content_description">Ajouter</string>
+    <!-- Content description (not visible, for screen readers etc.): Title for the button to save a search engine in the action bar -->
+    <string name="search_engine_add_custom_search_engine_edit_button_content_description">Enregistrer</string>
+    <!-- Text for the menu button to edit a search engine -->
+    <string name="search_engine_edit">Modifier</string>
+    <!-- Text for the menu button to delete a search engine -->
+    <string name="search_engine_delete">Supprimer</string>
+
+    <!-- Text for the button to create a custom search engine on the Add search engine screen -->
+    <string name="search_add_custom_engine_label">Personnalisé</string>
+    <!-- Placeholder text shown in the Search Engine Name TextField before a user enters text -->
+    <string name="search_add_custom_engine_name_hint">Nom</string>
+    <!-- Placeholder text shown in the Search String TextField before a user enters text -->
+    <string name="search_add_custom_engine_search_string_hint">Chaîne de recherche à utiliser</string>
+    <!-- Description text for the Search String TextField. The %s is part of the string -->
+    <string name="search_add_custom_engine_search_string_example">Remplacer les termes de la recherche par « %s ». Par exemple :\nhttps://www.google.com/search?q=%s</string>
+    <!-- Text for the button to learn more about adding a custom search engine -->
+    <string name="search_add_custom_engine_learn_more_label">En savoir plus</string>
+
+    <!-- Text shown when a user leaves the name field empty -->
+    <string name="search_add_custom_engine_error_empty_name">Saisissez le nom du moteur de recherche</string>
+    <!-- Text shown when a user tries to add a search engine that already exists -->
+    <string name="search_add_custom_engine_error_existing_name">Il existe déjà un moteur de recherche nommé « %s ».</string>
+    <!-- Text shown when a user leaves the search string field empty -->
+    <string name="search_add_custom_engine_error_empty_search_string">Saisissez la chaîne de recherche</string>
+    <!-- Text shown when a user leaves out the required template string -->
+    <string name="search_add_custom_engine_error_missing_template">Vérifiez que la chaîne de recherche suit le format de l’exemple</string>
+    <!-- Text shown when we aren't able to validate the custom search query. The first parameter is the url of the custom search engine -->
+    <string name="search_add_custom_engine_error_cannot_reach">Erreur de connexion à « %s »</string>
+    <!-- Text shown when a user creates a new search engine -->
+    <string name="search_add_custom_engine_success_message">%s : création effectuée</string>
+    <!-- Text shown when a user successfully edits a custom search engine -->
+    <string name="search_edit_custom_engine_success_message">%s : enregistrement effectué</string>
+    <!-- Text shown when a user successfully deletes a custom search engine -->
+    <string name="search_delete_search_engine_success_message">%s : suppression effectuée</string>
 </resources>

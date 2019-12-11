@@ -7,12 +7,10 @@ package org.mozilla.fenix.library
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.navigation.Navigation
 import kotlinx.android.synthetic.main.fragment_library.*
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.support.ktx.android.content.getColorFromAttr
@@ -21,6 +19,7 @@ import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.setToolbarColors
+import org.mozilla.fenix.ext.showToolbar
 
 /**
  * Displays buttons to navigate to library sections, such as bookmarks and history.
@@ -65,31 +64,19 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         inflater.inflate(R.menu.library_menu, menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.libraryClose -> {
-                Navigation.findNavController(requireActivity(), R.id.container).navigateUp()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         requireComponents.analytics.metrics.track(Event.LibraryClosed)
     }
 
     private fun initToolbar() {
-        val activity = activity as? AppCompatActivity
-        val toolbar = activity?.findViewById<Toolbar>(R.id.navigationToolbar)
-        context?.let { context ->
+        (activity as? AppCompatActivity)?.let { activity ->
+            val toolbar = activity.findViewById<Toolbar>(R.id.navigationToolbar)
             toolbar?.setToolbarColors(
-                foreground = context.getColorFromAttr(R.attr.primaryText),
-                background = context.getColorFromAttr(R.attr.foundation)
+                foreground = activity.getColorFromAttr(R.attr.primaryText),
+                background = activity.getColorFromAttr(R.attr.foundation)
             )
+            showToolbar(getString(R.string.library_title))
         }
-        activity?.title = getString(R.string.library_title)
-        activity?.supportActionBar?.show()
     }
 }

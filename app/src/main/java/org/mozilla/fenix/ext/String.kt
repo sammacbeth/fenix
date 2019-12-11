@@ -5,50 +5,94 @@
 package org.mozilla.fenix.ext
 
 import android.content.Context
+import android.net.Uri
+import android.util.Patterns
+import android.webkit.URLUtil
 import androidx.core.net.toUri
 import kotlinx.coroutines.runBlocking
 import mozilla.components.lib.publicsuffixlist.PublicSuffixList
+import mozilla.components.lib.publicsuffixlist.ext.urlToTrimmedHost
 import mozilla.components.support.ktx.android.net.hostWithoutCommonPrefixes
-import java.net.MalformedURLException
-import java.net.URL
+import java.net.IDN
+import java.util.Locale
+
+const val FILE_PREFIX = "file://"
+const val MAX_VALID_PORT = 65_535
 
 /**
- * Replaces the keys with the values with the map provided.
+ * Shortens URLs to be more user friendly.
+ *
+ * The algorithm used to generate these strings is a combination of FF desktop 'top sites',
+ * feedback from the security team, and documentation regarding url elision.  See
+ * StringTest.kt for details.
+ *
+ * This method is complex because URLs have a lot of edge cases. Be sure to thoroughly unit
+ * test any changes you make to it.
  */
-fun String.replace(pairs: Map<String, String>): String {
-    var result = this
-    pairs.forEach { (l, r) -> result = result.replace(l, r) }
-    return result
-}
+@Suppress("UNUSED_PARAMETER", "ReturnCount", "ComplexCondition")
+// Unused Parameter: We may resume stripping eTLD, depending on conversations between security and UX
+// Return count: This is a complex method, but it would not be more understandable if broken up
+// ComplexCondition: Breaking out the complex condition would make this logic harder to follow
+fun String.toShortUrl(publicSuffixList: PublicSuffixList): String {
+    val inputString = this
+    val uri = inputString.toUri()
 
-/**
- * Tries to parse and get host part if this [String] is valid URL.
- * Otherwise returns the string.
- */
-fun String.tryGetHostFromUrl(): String = try {
-    URL(this).host
-} catch (e: MalformedURLException) {
-    this
-}
-
-/**
- * Trim a host's prefix and suffix
- */
-fun String.urlToTrimmedHost(context: Context): String =
-    this.urlToTrimmedHost(context.components.publicSuffixList)
-
-/**
- * Trim a host's prefix and suffix
- */
-fun String.urlToTrimmedHost(publicSuffixList: PublicSuffixList): String {
-    return try {
-        val host = toUri().hostWithoutCommonPrefixes ?: return this
-        runBlocking {
-            publicSuffixList.stripPublicSuffix(host).await()
-        }
-    } catch (e: MalformedURLException) {
-        this
+    if (
+        inputString.isEmpty() ||
+        !URLUtil.isValidUrl(inputString) ||
+        inputString == FILE_PREFIX ||
+        uri.port !in -1..MAX_VALID_PORT
+    ) {
+        return inputString
     }
+
+    if (inputString.startsWith(FILE_PREFIX)) {
+        // Strip file prefix and return the remainder
+        return inputString.substring(FILE_PREFIX.length)
+    }
+
+    if (uri.host?.isIpv4() == true ||
+        uri.isIpv6() ||
+        // If inputString is just a hostname and not a FQDN, use the entire hostname.
+        uri.host?.contains(".") == false
+    ) {
+        return uri.host ?: inputString
+    }
+
+    fun String.stripUserInfo(): String {
+        val userInfo = this.toUri().encodedUserInfo
+        return if (userInfo != null) {
+            val infoIndex = this.indexOf(userInfo)
+            this.removeRange(infoIndex..infoIndex + userInfo.length)
+        } else {
+            this
+        }
+    }
+    fun String.stripPrefixes(): String = this.toUri().hostWithoutCommonPrefixes ?: this
+    fun String.toUnicode() = IDN.toUnicode(this)
+
+    return inputString
+        .stripUserInfo()
+        .toLowerCase(Locale.getDefault())
+        .stripPrefixes()
+        .toUnicode()
+}
+
+// impl via FFTV https://searchfox.org/mozilla-mobile/source/firefox-echo-show/app/src/main/java/org/mozilla/focus/utils/FormattedDomain.java#129
+fun String.isIpv4(): Boolean = Patterns.IP_ADDRESS.matcher(this).matches()
+
+// impl via FFiOS: https://github.com/mozilla-mobile/firefox-ios/blob/deb9736c905cdf06822ecc4a20152df7b342925d/Shared/Extensions/NSURLExtensions.swift#L292
+// True IPv6 validation is difficult. This is slightly better than nothing
+private fun Uri.isIpv6(): Boolean {
+    val host = this.host ?: return false
+    return host.isNotEmpty() && host.contains(":")
+}
+
+/**
+ * Trim a host's prefix and suffix
+ */
+fun String.urlToTrimmedHost(context: Context): String = runBlocking {
+    urlToTrimmedHost(context.components.publicSuffixList).await()
 }
 
 /**

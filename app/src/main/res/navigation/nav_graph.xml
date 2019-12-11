@@ -255,7 +255,6 @@
     <fragment
         android:id="@+id/bookmarkFragment"
         android:name="org.mozilla.fenix.library.bookmarks.BookmarkFragment"
-        android:label="@string/library_bookmarks"
         tools:layout="@layout/fragment_bookmark">
         <argument
             android:name="currentRoot"
@@ -395,6 +394,9 @@
         <action
             android:id="@+id/action_settingsFragment_to_defaultBrowserSettingsFragment"
             app:destination="@id/defaultBrowserSettingsFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_toolbarSettingsFragment"
+            app:destination="@id/toolbarSettingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/dataChoicesFragment"
@@ -429,7 +431,14 @@
     <fragment
         android:id="@+id/searchEngineFragment"
         android:name="org.mozilla.fenix.settings.search.SearchEngineFragment"
-        android:label="@string/preferences_search" />
+        android:label="@string/preferences_search">
+        <action
+            android:id="@+id/action_searchEngineFragment_to_addSearchEngineFragment"
+            app:destination="@+id/addSearchEngineFragment" />
+        <action
+            android:id="@+id/action_searchEngineFragment_to_editCustomSearchEngineFragment"
+            app:destination="@+id/editCustomSearchEngineFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/turnOnSyncFragment"
@@ -536,20 +545,12 @@
         android:name="org.mozilla.fenix.share.ShareFragment"
         tools:layout="@layout/fragment_share">
         <argument
-            android:name="url"
-            android:defaultValue="@null"
-            app:argType="string"
-            app:nullable="true" />
+            android:name="data"
+            app:argType="mozilla.components.concept.engine.prompt.ShareData[]" />
         <argument
-            android:name="title"
-            android:defaultValue="@null"
-            app:argType="string"
-            app:nullable="true" />
-        <argument
-            android:name="tabs"
-            android:defaultValue="@null"
-            app:argType="org.mozilla.fenix.share.ShareTab[]"
-            app:nullable="true" />
+            android:name="showPage"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <action
             android:id="@+id/action_shareFragment_to_turnOnSyncFragment"
             app:destination="@+id/turnOnSyncFragment"
@@ -660,4 +661,20 @@
             android:name="savedLoginItem"
             app:argType="org.mozilla.fenix.logins.SavedLoginsItem" />
     </fragment>
+    <fragment
+        android:id="@+id/addSearchEngineFragment"
+        android:name="org.mozilla.fenix.settings.search.AddSearchEngineFragment"
+        android:label="AddSearchEngineFragment" />
+    <fragment
+        android:id="@+id/editCustomSearchEngineFragment"
+        android:name="org.mozilla.fenix.settings.search.EditCustomSearchEngineFragment"
+        android:label="EditCustomSearchEngineFragment">
+        <argument
+            android:name="searchEngineIdentifier"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/toolbarSettingsFragment"
+        android:name="org.mozilla.fenix.settings.ToolbarSettingsFragment"
+        android:label="ToolbarSettingsFragment" />
 </navigation>

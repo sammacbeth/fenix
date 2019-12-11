@@ -1,4 +1,4 @@
-include ':app', ':architecture', ':dat', ':privacy'
+include ':app', ':dat', ':privacy'
 
 def log(message) {
     logger.lifecycle("[settings] ${message}")

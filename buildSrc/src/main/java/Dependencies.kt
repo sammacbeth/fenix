@@ -18,12 +18,13 @@ object Versions {
     const val osslicenses_library = "17.0.0"
 
     const val androidx_appcompat = "1.1.0"
+    const val androidx_biometric = "1.0.0"
     const val androidx_coordinator_layout = "1.1.0-beta01"
     const val androidx_constraint_layout = "2.0.0-beta2"
     const val androidx_preference = "1.1.0"
     const val androidx_legacy = "1.0.0"
     const val androidx_annotation = "1.1.0"
-    const val androidx_lifecycle = "2.2.0-beta01"
+    const val androidx_lifecycle = "2.2.0-rc02"
     const val androidx_fragment = "1.2.0-beta02"
     const val androidx_navigation = "2.2.0-beta01"
     const val androidx_recyclerview = "1.1.0-beta04"
@@ -35,14 +36,14 @@ object Versions {
     const val androidx_work = "2.2.0"
     const val google_material = "1.1.0-beta01"
 
-    const val mozilla_android_components = "20.0.0"
+    const val mozilla_android_components = "24.0.0"
     // Note that android-components also depends on application-services,
     // and in fact is our main source of appservices-related functionality.
     // The version number below tracks the application-services version
     // that we depend on directly for the fenix-megazord (and for it's
     // forUnitTest variant), and it's important that it be kept in
     // sync with the version used by android-components above.
-    const val mozilla_appservices = "0.42.2"
+    const val mozilla_appservices = "0.44.0"
 
     const val mozilla_glean = "19.0.0"
 
@@ -135,6 +136,7 @@ object Deps {
     const val mozilla_feature_tab_collections = "org.mozilla.components:feature-tab-collections:${Versions.mozilla_android_components}"
     const val mozilla_feature_sendtab = "org.mozilla.components:feature-sendtab:${Versions.mozilla_android_components}"
     const val mozilla_feature_webcompat = "org.mozilla.components:feature-webcompat:${Versions.mozilla_android_components}"
+    const val mozilla_feature_webnotifications = "org.mozilla.components:feature-webnotifications:${Versions.mozilla_android_components}"
 
     const val mozilla_service_sync_logins =
         "org.mozilla.components:service-sync-logins:${Versions.mozilla_android_components}"
@@ -149,6 +151,7 @@ object Deps {
 
     const val mozilla_lib_crash = "org.mozilla.components:lib-crash:${Versions.mozilla_android_components}"
     const val mozilla_lib_push_firebase = "org.mozilla.components:lib-push-firebase:${Versions.mozilla_android_components}"
+    const val mozilla_lib_dataprotect = "org.mozilla.components:lib-dataprotect:${Versions.mozilla_android_components}"
 
     const val mozilla_ui_publicsuffixlist = "org.mozilla.components:lib-publicsuffixlist:${Versions.mozilla_android_components}"
 
@@ -166,12 +169,13 @@ object Deps {
     const val leanplum = "com.leanplum:leanplum-core:${Versions.leanplum}"
 
     const val androidx_annotation = "androidx.annotation:annotation:${Versions.androidx_annotation}"
+    const val androidx_biometric = "androidx.biometric:biometric:${Versions.androidx_biometric}"
     const val androidx_fragment = "androidx.fragment:fragment-ktx:${Versions.androidx_fragment}"
     const val androidx_appcompat = "androidx.appcompat:appcompat:${Versions.androidx_appcompat}"
     const val androidx_coordinatorlayout = "androidx.coordinatorlayout:coordinatorlayout:${Versions.androidx_coordinator_layout}"
     const val androidx_constraintlayout = "androidx.constraintlayout:constraintlayout:${Versions.androidx_constraint_layout}"
     const val androidx_legacy = "androidx.legacy:legacy-support-v4:${Versions.androidx_legacy}"
-    const val androidx_lifecycle_extensions = "androidx.lifecycle:lifecycle-extensions:${Versions.androidx_lifecycle}"
+    const val androidx_lifecycle_livedata = "androidx.lifecycle:lifecycle-livedata-ktx:${Versions.androidx_lifecycle}"
     const val androidx_lifecycle_viewmodel = "androidx.lifecycle:lifecycle-viewmodel-ktx:${Versions.androidx_lifecycle}"
     const val androidx_lifecycle_runtime = "androidx.lifecycle:lifecycle-runtime-ktx:${Versions.androidx_lifecycle}"
     const val androidx_paging = "androidx.paging:paging-runtime-ktx:${Versions.androidx_paging}"

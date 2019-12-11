@@ -18,6 +18,7 @@ import org.mozilla.fenix.helpers.AndroidAssetDispatcher
 import org.mozilla.fenix.helpers.HomeActivityTestRule
 import org.mozilla.fenix.helpers.TestAssetHelper
 import org.mozilla.fenix.helpers.TestHelper.longTapSelectItem
+import org.mozilla.fenix.ui.robots.historyMenu
 import org.mozilla.fenix.ui.robots.homeScreen
 import org.mozilla.fenix.ui.robots.multipleSelectionToolbar
 import org.mozilla.fenix.ui.robots.navigationToolbar
@@ -53,7 +54,6 @@ class HistoryTest {
     }
 
     @Test
-    @Ignore("Temp disable flakey test - see: https://github.com/mozilla-mobile/fenix/issues/5462")
     fun noHistoryItemsInCacheTest() {
         homeScreen {
         }.openThreeDotMenu {
@@ -71,8 +71,8 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             verifyHistoryMenuView()
             verifyVisitedTimeTitle()
@@ -88,8 +88,8 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             openOverflowMenu()
             clickThreeDotMenuDelete()
@@ -104,8 +104,8 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             clickDeleteHistoryButton()
             verifyDeleteConfirmationMessage()
@@ -121,8 +121,8 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             longTapSelectItem(firstWebPage.url)
         }
@@ -130,7 +130,7 @@ class HistoryTest {
         multipleSelectionToolbar {
             verifyMultiSelectionCheckmark()
             verifyMultiSelectionCounter()
-            verifyShareButton()
+            verifyShareHistoryButton()
             verifyCloseToolbarButton()
         }.closeToolbarReturnToHistory {
             verifyHistoryMenuView()
@@ -149,7 +149,7 @@ class HistoryTest {
         }.openThreeDotMenu {
         }.openHistory {
             longTapSelectItem(firstWebPage.url)
-            openActionBarOverflowOrOptionsMenu(activityTestRule.getActivity())
+            openActionBarOverflowOrOptionsMenu(activityTestRule.activity)
         }
 
         multipleSelectionToolbar {
@@ -166,11 +166,11 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             longTapSelectItem(firstWebPage.url)
-            openActionBarOverflowOrOptionsMenu(activityTestRule.getActivity())
+            openActionBarOverflowOrOptionsMenu(activityTestRule.activity)
         }
 
         multipleSelectionToolbar {
@@ -188,18 +188,23 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openNavigationToolbar {
+        }.openHomeScreen {}
+
+        navigationToolbar {
         }.enterURLAndEnterToBrowser(secondWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             longTapSelectItem(firstWebPage.url)
             longTapSelectItem(secondWebPage.url)
-            openActionBarOverflowOrOptionsMenu(activityTestRule.getActivity())
+            openActionBarOverflowOrOptionsMenu(activityTestRule.activity)
         }
 
         multipleSelectionToolbar {
-        }.clickMultiSelectionDelete {
+            clickMultiSelectionDelete()
+        }
+
+        historyMenu {
             verifyEmptyHistoryView()
         }
     }
@@ -211,14 +216,14 @@ class HistoryTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(firstWebPage.url) {
-        }.openHomeScreen {
         }.openThreeDotMenu {
+        }.openLibrary {
         }.openHistory {
             longTapSelectItem(firstWebPage.url)
         }
 
         multipleSelectionToolbar {
-            clickShareButton()
+            clickShareHistoryButton()
             verifyShareOverlay()
             verifyShareTabFavicon()
             verifyShareTabTitle()
@@ -227,23 +232,11 @@ class HistoryTest {
     }
 
     @Test
-    @Ignore("Temp disable flakey test - see: https://github.com/mozilla-mobile/fenix/issues/5462")
     fun verifyBackNavigation() {
         homeScreen {
         }.openThreeDotMenu {
         }.openHistory {
         }.goBack {
-            verifyHomeScreen()
-        }
-    }
-
-    @Ignore("Test will be included after back navigation from History Fragment is sorted")
-    @Test
-    fun verifyCloseMenu() {
-        homeScreen {
-        }.openThreeDotMenu {
-        }.openHistory {
-        }.closeMenu {
             verifyHomeScreen()
         }
     }

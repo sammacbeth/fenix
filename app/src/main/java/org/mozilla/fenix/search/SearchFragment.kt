@@ -14,21 +14,24 @@ import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewStub
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.transition.TransitionInflater
 import kotlinx.android.synthetic.main.fragment_search.*
 import kotlinx.android.synthetic.main.fragment_search.view.*
+import kotlinx.android.synthetic.main.search_suggestions_onboarding.view.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import mozilla.components.concept.storage.HistoryStorage
 import mozilla.components.feature.qr.QrFeature
 import mozilla.components.lib.state.ext.consumeFrom
-import mozilla.components.support.base.feature.BackHandler
+import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.content.hasCamera
 import mozilla.components.support.ktx.android.content.isPermissionGranted
+import mozilla.components.ui.autocomplete.InlineAutocompleteEditText
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
@@ -36,13 +39,15 @@ import org.mozilla.fenix.components.StoreProvider
 import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getSpannable
+import org.mozilla.fenix.ext.hideToolbar
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.search.awesomebar.AwesomeBarView
 import org.mozilla.fenix.search.toolbar.ToolbarView
+import org.mozilla.fenix.settings.SupportUtils
 
 @Suppress("TooManyFunctions", "LargeClass")
-class SearchFragment : Fragment(), BackHandler {
+class SearchFragment : Fragment(), UserInteractionHandler {
     private lateinit var toolbarView: ToolbarView
     private lateinit var awesomeBarView: AwesomeBarView
     private val qrFeature = ViewBoundFeatureWrapper<QrFeature>()
@@ -78,8 +83,16 @@ class SearchFragment : Fragment(), BackHandler {
         val view = inflater.inflate(R.layout.fragment_search, container, false)
         val url = session?.url.orEmpty()
         val currentSearchEngine = SearchEngineSource.Default(
-            requireComponents.search.searchEngineManager.getDefaultSearchEngine(requireContext())
+            requireComponents.search.provider.getDefaultEngine(requireContext())
         )
+
+        val showSearchSuggestions =
+            if ((activity as HomeActivity).browsingModeManager.mode.isPrivate) {
+                requireContext().settings().shouldShowSearchSuggestions &&
+                        requireContext().settings().shouldShowSearchSuggestionsInPrivate
+            } else {
+                requireContext().settings().shouldShowSearchSuggestions
+            }
 
         searchStore = StoreProvider.get(this) {
             SearchFragmentStore(
@@ -87,7 +100,8 @@ class SearchFragment : Fragment(), BackHandler {
                     query = url,
                     searchEngineSource = currentSearchEngine,
                     defaultEngineSource = currentSearchEngine,
-                    showSearchSuggestions = requireContext().settings().shouldShowSearchSuggestions,
+                    showSearchSuggestions = showSearchSuggestions,
+                    showSearchSuggestionsHint = false,
                     showSearchShortcuts = requireContext().settings().shouldShowSearchShortcuts && url.isEmpty(),
                     showClipboardSuggestions = requireContext().settings().shouldShowClipboardSuggestions,
                     showHistorySuggestions = requireContext().settings().shouldShowHistorySuggestions,
@@ -116,6 +130,10 @@ class SearchFragment : Fragment(), BackHandler {
             historyStorageProvider(),
             (activity as HomeActivity).browsingModeManager.mode.isPrivate
         )
+
+        val urlView = toolbarView.view
+            .findViewById<InlineAutocompleteEditText>(R.id.mozac_browser_toolbar_edit_url_view)
+        urlView?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
 
         startPostponedEnterTransition()
         return view
@@ -177,6 +195,37 @@ class SearchFragment : Fragment(), BackHandler {
             qrFeature.get()?.scan(R.id.container)
         }
 
+        val stubListener = ViewStub.OnInflateListener { _, inflated ->
+            inflated.learn_more.setOnClickListener {
+                (activity as HomeActivity)
+                    .openToBrowserAndLoad(
+                        searchTermOrURL = SupportUtils.getGenericSumoURLForTopic(
+                            SupportUtils.SumoTopic.SEARCH_SUGGESTION
+                        ),
+                        newTab = searchStore.state.session == null,
+                        from = BrowserDirection.FromSearch
+                    )
+            }
+
+            inflated.allow.setOnClickListener {
+                inflated.visibility = View.GONE
+                context?.settings()?.shouldShowSearchSuggestionsInPrivate = true
+                context?.settings()?.showSearchSuggestionsInPrivateOnboardingFinished = true
+                requireComponents.analytics.metrics.track(Event.PrivateBrowsingShowSearchSuggestions)
+            }
+
+            inflated.dismiss.setOnClickListener {
+                inflated.visibility = View.GONE
+                context?.settings()?.shouldShowSearchSuggestionsInPrivate = false
+                context?.settings()?.showSearchSuggestionsInPrivateOnboardingFinished = true
+            }
+
+            inflated.text.text =
+                getString(R.string.search_suggestions_onboarding_text, getString(R.string.app_name))
+        }
+
+        view.search_suggestions_onboarding.setOnInflateListener((stubListener))
+
         view.toolbar_wrapper.clipToOutline = false
 
         fill_link_from_clipboard.setOnClickListener {
@@ -193,6 +242,7 @@ class SearchFragment : Fragment(), BackHandler {
             toolbarView.update(it)
             updateSearchWithLabel(it)
             updateClipboardSuggestion(it, requireContext().components.clipboardHandler.url)
+            updateSearchSuggestionsHintVisibility(it)
         }
 
         startPostponedEnterTransition()
@@ -204,10 +254,7 @@ class SearchFragment : Fragment(), BackHandler {
         // The user has the option to go to 'Shortcuts' -> 'Search engine settings' to modify the default search engine.
         // When returning from that settings screen we need to update it to account for any changes.
         val currentDefaultEngine =
-            requireComponents.search.searchEngineManager.getDefaultSearchEngine(
-                requireContext(),
-                requireContext().settings().defaultSearchEngineName
-            )
+            requireComponents.search.provider.getDefaultEngine(requireContext())
 
         if (searchStore.state.defaultEngineSource.searchEngine != currentDefaultEngine) {
             searchStore.dispatch(
@@ -220,10 +267,13 @@ class SearchFragment : Fragment(), BackHandler {
             toolbarView.view.requestFocus()
         }
 
-        updateClipboardSuggestion(searchStore.state, requireContext().components.clipboardHandler.url)
+        updateClipboardSuggestion(
+            searchStore.state,
+            requireContext().components.clipboardHandler.url
+        )
 
         permissionDidUpdate = false
-        (activity as AppCompatActivity).supportActionBar?.hide()
+        hideToolbar()
     }
 
     override fun onPause() {
@@ -236,9 +286,8 @@ class SearchFragment : Fragment(), BackHandler {
             qrFeature.onBackPressed() -> {
                 view?.searchScanButton?.isChecked = false
                 toolbarView.view.requestFocus()
-                true
             }
-            else -> false
+            else -> awesomeBarView.isKeyboardDismissedProgrammatically
         }
     }
 
@@ -250,7 +299,7 @@ class SearchFragment : Fragment(), BackHandler {
     private fun updateClipboardSuggestion(searchState: SearchFragmentState, clipboardUrl: String?) {
         val visibility =
             if (searchState.showClipboardSuggestions && searchState.query.isEmpty() && !clipboardUrl.isNullOrEmpty())
-            View.VISIBLE else View.GONE
+                View.VISIBLE else View.GONE
 
         fill_link_from_clipboard.visibility = visibility
         divider_line.visibility = visibility
@@ -282,6 +331,11 @@ class SearchFragment : Fragment(), BackHandler {
         return if (requireContext().settings().shouldShowHistorySuggestions) {
             requireComponents.core.historyStorage
         } else null
+    }
+
+    private fun updateSearchSuggestionsHintVisibility(state: SearchFragmentState) {
+        view?.findViewById<View>(R.id.search_suggestions_onboarding)
+            ?.isVisible = state.showSearchSuggestionsHint
     }
 
     companion object {

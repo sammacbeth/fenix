@@ -6,51 +6,35 @@ package org.mozilla.fenix.logins
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 
 private sealed class AdapterItem {
     data class Item(val item: SavedLoginsItem) : AdapterItem()
 }
 
-private class SavedLoginsList(savedLogins: List<SavedLoginsItem>) {
-    val items: List<AdapterItem> = savedLogins.map { AdapterItem.Item(it) }
-}
-
 class SavedLoginsAdapter(
     private val interactor: SavedLoginsInteractor
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-    private var savedLoginsList: SavedLoginsList = SavedLoginsList(emptyList())
+) : ListAdapter<SavedLoginsItem, SavedLoginsListItemViewHolder>(DiffCallback) {
 
-    fun updateData(items: List<SavedLoginsItem>) {
-        this.savedLoginsList = SavedLoginsList(items)
-        notifyDataSetChanged()
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): SavedLoginsListItemViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(SavedLoginsListItemViewHolder.LAYOUT_ID, parent, false)
+        return SavedLoginsListItemViewHolder(view, interactor)
     }
 
-    override fun getItemCount(): Int = savedLoginsList.items.size
-
-    override fun getItemViewType(position: Int): Int {
-        return when (savedLoginsList.items[position]) {
-            is AdapterItem.Item -> SavedLoginsListItemViewHolder.LAYOUT_ID
-        }
+    override fun onBindViewHolder(holder: SavedLoginsListItemViewHolder, position: Int) {
+        holder.bind(getItem(position))
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
+    private object DiffCallback : DiffUtil.ItemCallback<SavedLoginsItem>() {
+        override fun areItemsTheSame(oldItem: SavedLoginsItem, newItem: SavedLoginsItem) =
+            oldItem.url == newItem.url
 
-        return when (viewType) {
-            SavedLoginsListItemViewHolder.LAYOUT_ID -> SavedLoginsListItemViewHolder(
-                view,
-                interactor
-            )
-            else -> throw IllegalStateException()
-        }
-    }
-
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder) {
-            is SavedLoginsListItemViewHolder -> (savedLoginsList.items[position] as AdapterItem.Item).also {
-                holder.bind(it.item)
-            }
-        }
+        override fun areContentsTheSame(oldItem: SavedLoginsItem, newItem: SavedLoginsItem) =
+            oldItem == newItem
     }
 }

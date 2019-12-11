@@ -11,11 +11,11 @@ import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.hasFocus
-import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withResourceName
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
@@ -38,7 +38,8 @@ class ThreeDotMenuMainRobot {
     fun verifyHelpButton() = assertHelpButton()
     fun verifyThreeDotMenuExists() = threeDotMenuRecyclerViewExists()
     fun verifyForwardButton() = assertForwardButton()
-    fun verifyBackButton() = assertBackButton()
+    fun verifyAddBookmarkButton() = assertAddBookmarkButton()
+    fun verifyEditBookmarkButton() = assertEditBookmarkButton()
     fun verifyRefreshButton() = assertRefreshButton()
     fun verifyCloseAllTabsButton() = assertCloseAllTabsButton()
     fun verifyShareButton() = assertShareButton()
@@ -52,9 +53,19 @@ class ThreeDotMenuMainRobot {
     fun clickBrowserViewSaveCollectionButton() {
         browserViewSaveCollectionButton().click()
     }
+
     fun clickAddNewCollection() {
         addNewCollectionButton().click()
     }
+
+    fun clickAddBookmarkButton() {
+        mDevice.waitNotNull(
+            Until.findObject(By.desc("Bookmark")),
+            waitingTime
+        )
+        addBookmarkButton().click()
+    }
+
     fun verifyCollectionNameTextField() = assertCollectionNameTextField()
     fun verifyFindInPageButton() = assertFindInPageButton()
     fun verifyShareScrim() = assertShareScrim()
@@ -115,8 +126,10 @@ class ThreeDotMenuMainRobot {
         }
 
         fun goBack(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
-            mDevice.waitNotNull(Until.findObject(By.desc("Back")), waitingTime)
-            backButton().click()
+            // Close three dot
+            mDevice.pressBack()
+            // Nav back to previous page
+            mDevice.pressBack()
 
             BrowserRobot().interact()
             return BrowserRobot.Transition()
@@ -147,7 +160,7 @@ class ThreeDotMenuMainRobot {
         }
 
         fun openWhatsNew(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
-            mDevice.waitNotNull(Until.findObject(By.text("What's New")), waitingTime)
+            mDevice.waitNotNull(Until.findObject(By.text("What’s New")), waitingTime)
             whatsNewButton().click()
 
             BrowserRobot().interact()
@@ -170,7 +183,8 @@ private fun threeDotMenuRecyclerViewExists() {
     onView(withId(R.id.mozac_browser_menu_recyclerView)).check(matches(isDisplayed()))
 }
 
-private fun settingsButton() = onView(allOf(withText(R.string.settings)))
+private fun settingsButton() = onView(allOf(withText(R.string.settings),
+    withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 private fun assertSettingsButton() = settingsButton()
     .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 
@@ -194,8 +208,12 @@ private fun forwardButton() = onView(ViewMatchers.withContentDescription("Forwar
 private fun assertForwardButton() = forwardButton()
     .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 
-private fun backButton() = onView(ViewMatchers.withContentDescription("Back"))
-private fun assertBackButton() = backButton()
+private fun addBookmarkButton() = onView(ViewMatchers.withContentDescription("Bookmark"))
+private fun assertAddBookmarkButton() = addBookmarkButton()
+    .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
+
+private fun editBookmarkButton() = onView(ViewMatchers.withContentDescription("Edit bookmark"))
+private fun assertEditBookmarkButton() = editBookmarkButton()
     .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 
 private fun refreshButton() = onView(ViewMatchers.withContentDescription("Refresh"))
@@ -210,7 +228,7 @@ private fun shareTabButton() = onView(allOf(withText("Share tabs")))
 private fun assertShareTabButton() = shareTabButton()
     .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 
-private fun shareButton() = onView(allOf(withText("Share")))
+private fun shareButton() = onView(ViewMatchers.withContentDescription("Share"))
 private fun assertShareButton() = shareButton()
     .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 
@@ -247,6 +265,9 @@ private fun ShareALinkTitle() =
 
 private fun assertShareALinkTitle() = ShareALinkTitle()
 
-private fun whatsNewButton() = onView(allOf(withText("What's New")))
+private fun whatsNewButton() = onView(
+    allOf(
+        withText("What’s New"),
+    withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
 private fun assertWhatsNewButton() = whatsNewButton()
     .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))

@@ -21,15 +21,15 @@ import androidx.transition.TransitionManager
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.component_collection_creation.*
 import kotlinx.android.synthetic.main.component_collection_creation.view.*
+import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.components.support.ktx.android.view.showKeyboard
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.increaseTapArea
-import org.mozilla.fenix.ext.urlToTrimmedHost
-import org.mozilla.fenix.home.sessioncontrol.Tab
-import org.mozilla.fenix.home.sessioncontrol.TabCollection
+import org.mozilla.fenix.ext.toShortUrl
+import org.mozilla.fenix.home.Tab
 
 @SuppressWarnings("LargeClass")
 class CollectionCreationView(
@@ -268,7 +268,7 @@ class CollectionCreationView(
                 Tab(
                     tab.id.toString(),
                     tab.url,
-                    tab.url.urlToTrimmedHost(view.context),
+                    tab.url.toShortUrl(view.context.components.publicSuffixList),
                     tab.title
                 )
             }.let { tabs ->
@@ -313,8 +313,8 @@ class CollectionCreationView(
         }
     }
 
-    fun onKey(keyCode: Int, event: KeyEvent?): Boolean {
-        return if (event?.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
+    fun onKey(keyCode: Int, event: KeyEvent): Boolean {
+        return if (event.action == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
             interactor.onBackPressed(step)
             true
         } else {

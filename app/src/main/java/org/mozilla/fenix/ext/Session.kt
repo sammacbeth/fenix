@@ -8,19 +8,19 @@ import android.content.Context
 import mozilla.components.browser.session.Session
 import mozilla.components.feature.media.state.MediaState
 import mozilla.components.lib.publicsuffixlist.PublicSuffixList
-import org.mozilla.fenix.home.sessioncontrol.Tab
+import org.mozilla.fenix.home.Tab
 
 fun Session.toTab(context: Context, selected: Boolean? = null, mediaState: MediaState? = null): Tab =
     this.toTab(context.components.publicSuffixList, selected, mediaState)
 
 fun Session.toTab(publicSuffixList: PublicSuffixList, selected: Boolean? = null, mediaState: MediaState? = null): Tab {
     return Tab(
-        this.id,
-        this.url,
-        this.url.urlToTrimmedHost(publicSuffixList),
-        this.title,
-        selected,
-        mediaState,
-        this.icon
+        sessionId = this.id,
+        url = this.url,
+        hostname = this.url.toShortUrl(publicSuffixList),
+        title = this.title,
+        selected = selected,
+        mediaState = mediaState,
+        icon = this.icon
     )
 }

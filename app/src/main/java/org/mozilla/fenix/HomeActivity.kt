@@ -27,7 +27,7 @@ import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.service.fxa.sync.SyncReason
-import mozilla.components.support.base.feature.BackHandler
+import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.ktx.kotlin.isUrl
 import mozilla.components.support.ktx.kotlin.toNormalizedUrl
 import mozilla.components.support.utils.Browsers
@@ -47,7 +47,6 @@ import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.home.HomeFragmentDirections
 import org.mozilla.fenix.home.intent.CrashReporterIntentProcessor
 import org.mozilla.fenix.home.intent.DeepLinkIntentProcessor
-import org.mozilla.fenix.home.intent.NotificationsIntentProcessor
 import org.mozilla.fenix.home.intent.OpenBrowserIntentProcessor
 import org.mozilla.fenix.home.intent.SpeechProcessingIntentProcessor
 import org.mozilla.fenix.home.intent.StartSearchIntentProcessor
@@ -76,7 +75,6 @@ open class HomeActivity : AppCompatActivity() {
 
     private val externalSourceIntentProcessors by lazy {
         listOf(
-            NotificationsIntentProcessor(this),
             SpeechProcessingIntentProcessor(this),
             StartSearchIntentProcessor(components.analytics.metrics),
             DeepLinkIntentProcessor(this),
@@ -169,7 +167,7 @@ open class HomeActivity : AppCompatActivity() {
 
     final override fun onBackPressed() {
         supportFragmentManager.primaryNavigationFragment?.childFragmentManager?.fragments?.forEach {
-            if (it is BackHandler && it.onBackPressed()) {
+            if (it is UserInteractionHandler && it.onBackPressed()) {
                 return
             }
         }
