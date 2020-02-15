@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreference
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import mozilla.components.concept.sync.AccountObserver
@@ -36,7 +37,7 @@ import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.ext.showToolbar
 import java.util.concurrent.Executors
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 class LoginsFragment : PreferenceFragmentCompat(), AccountObserver {
 
     @TargetApi(M)
@@ -83,9 +84,31 @@ class LoginsFragment : PreferenceFragmentCompat(), AccountObserver {
             .build()
     }
 
+    @Suppress("ComplexMethod")
     override fun onResume() {
         super.onResume()
         showToolbar(getString(R.string.preferences_passwords_logins_and_passwords))
+
+        val saveLoginsSettingKey = getPreferenceKey(R.string.pref_key_save_logins_settings)
+        findPreference<Preference>(saveLoginsSettingKey)?.apply {
+            summary = getString(
+                if (context.settings().shouldPromptToSaveLogins)
+                    R.string.preferences_passwords_save_logins_ask_to_save else
+                    R.string.preferences_passwords_save_logins_never_save
+            )
+            setOnPreferenceClickListener {
+                navigateToSaveLoginSettingFragment()
+                true
+            }
+        }
+
+        val autofillPreferenceKey = getPreferenceKey(R.string.pref_key_autofill_logins)
+        findPreference<SwitchPreference>(autofillPreferenceKey)?.apply {
+            isEnabled = context.settings().shouldPromptToSaveLogins
+            isChecked =
+                context.settings().shouldAutofillLogins && context.settings().shouldPromptToSaveLogins
+            onPreferenceChangeListener = SharedPreferenceUpdater()
+        }
 
         val savedLoginsKey = getPreferenceKey(R.string.pref_key_saved_logins)
         findPreference<Preference>(savedLoginsKey)?.setOnPreferenceClickListener {
@@ -241,7 +264,8 @@ class LoginsFragment : PreferenceFragmentCompat(), AccountObserver {
     }
 
     private fun navigateToAccountSettingsFragment() {
-        val directions = LoginsFragmentDirections.actionLoginsFragmentToAccountSettingsFragment()
+        val directions =
+            LoginsFragmentDirections.actionLoginsFragmentToAccountSettingsFragment()
         findNavController().navigate(directions)
     }
 
@@ -252,6 +276,12 @@ class LoginsFragment : PreferenceFragmentCompat(), AccountObserver {
 
     private fun navigateToTurnOnSyncFragment() {
         val directions = LoginsFragmentDirections.actionLoginsFragmentToTurnOnSyncFragment()
+        findNavController().navigate(directions)
+    }
+
+    private fun navigateToSaveLoginSettingFragment() {
+        val directions =
+            LoginsFragmentDirections.actionLoginsFragmentToSaveLoginSettingFragment()
         findNavController().navigate(directions)
     }
 

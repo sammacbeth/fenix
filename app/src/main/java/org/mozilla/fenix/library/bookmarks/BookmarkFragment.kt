@@ -38,7 +38,7 @@ import mozilla.components.concept.sync.OAuthAccount
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.FenixSnackbarPresenter
+import org.mozilla.fenix.components.FenixSnackbar
 import org.mozilla.fenix.components.StoreProvider
 import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.bookmarkStorage
@@ -87,7 +87,7 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), UserInteractionHan
             bookmarksController = DefaultBookmarkController(
                 context = context!!,
                 navController = findNavController(),
-                snackbarPresenter = FenixSnackbarPresenter(view),
+                snackbar = FenixSnackbar.make(view, FenixSnackbar.LENGTH_LONG),
                 deleteBookmarkNodes = ::deleteMulti,
                 invokePendingDeletion = ::invokePendingDeletion
             ),
@@ -154,8 +154,10 @@ class BookmarkFragment : LibraryPageFragment<BookmarkNode>(), UserInteractionHan
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         when (val mode = bookmarkStore.state.mode) {
-            BookmarkFragmentState.Mode.Normal -> {
-                inflater.inflate(R.menu.bookmarks_menu, menu)
+            is BookmarkFragmentState.Mode.Normal -> {
+                if (mode.showMenu) {
+                    inflater.inflate(R.menu.bookmarks_menu, menu)
+                }
             }
             is BookmarkFragmentState.Mode.Selecting -> {
                 if (mode.selectedItems.any { it.type != BookmarkNodeType.ITEM }) {

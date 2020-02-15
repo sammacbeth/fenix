@@ -9,8 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.content.ContextCompat
 import androidx.core.widget.TextViewCompat
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.ContentViewCallback
@@ -18,6 +18,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fenix_snackbar.view.*
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.increaseTapArea
+import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.test.Mockable
 
 @Mockable
@@ -31,11 +32,7 @@ class FenixSnackbar private constructor(
     init {
         view.background = null
 
-        view.snackbar_layout.background = if (isError) {
-            ContextCompat.getDrawable(context, R.drawable.fenix_snackbar_error_background)
-        } else {
-            ContextCompat.getDrawable(context, R.drawable.fenix_snackbar_background)
-        }
+        setAppropriateBackground(isError)
 
         content.snackbar_btn.increaseTapArea(actionButtonIncreaseDps)
 
@@ -48,8 +45,20 @@ class FenixSnackbar private constructor(
         )
     }
 
+    fun setAppropriateBackground(isError: Boolean) {
+        view.snackbar_layout.background = if (isError) {
+            AppCompatResources.getDrawable(context, R.drawable.fenix_snackbar_error_background)
+        } else {
+            AppCompatResources.getDrawable(context, R.drawable.fenix_snackbar_background)
+        }
+    }
+
     fun setText(text: String) = this.apply {
         view.snackbar_text.text = text
+    }
+
+    fun setLength(duration: Int) = this.apply {
+        this.duration = duration
     }
 
     fun setAction(text: String, action: () -> Unit) = this.apply {
@@ -86,6 +95,28 @@ class FenixSnackbar private constructor(
             val callback = FenixSnackbarCallback(content)
             return FenixSnackbar(parent, content, callback, isError).also {
                 it.duration = duration
+            }
+        }
+
+        /**
+         * Considers BrowserToolbar for padding when making snackbar
+         */
+        fun makeWithToolbarPadding(
+            view: View,
+            duration: Int = LENGTH_LONG,
+            isError: Boolean = false
+        ): FenixSnackbar {
+            val shouldUseBottomToolbar = view.context.settings().shouldUseBottomToolbar
+            val toolbarHeight = view.context.resources
+                .getDimensionPixelSize(R.dimen.browser_toolbar_height)
+
+            return make(view, duration, isError).apply {
+                this.view.setPadding(
+                    0,
+                    0,
+                    0,
+                    if (shouldUseBottomToolbar) toolbarHeight else 0
+                )
             }
         }
 
@@ -144,21 +175,5 @@ private class FenixSnackbarCallback(
         private const val defaultYTranslation = 0f
         private const val animateInDuration = 200L
         private const val animateOutDuration = 150L
-    }
-}
-
-class FenixSnackbarPresenter(
-    private val view: View
-) {
-    fun present(
-        text: String,
-        length: Int = FenixSnackbar.LENGTH_LONG,
-        action: (() -> Unit)? = null,
-        actionName: String? = null,
-        isError: Boolean = false
-    ) {
-        FenixSnackbar.make(view, length, isError).setText(text).let {
-            if (action != null && actionName != null) it.setAction(actionName, action) else it
-        }.show()
     }
 }

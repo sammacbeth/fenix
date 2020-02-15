@@ -25,6 +25,9 @@ import org.mozilla.fenix.ext.showToolbar
 @SuppressWarnings("TooManyFunctions")
 class TurnOnSyncFragment : Fragment(), AccountObserver {
 
+    private val safeArguments get() = requireNotNull(arguments)
+    private val args get() = TurnOnSyncFragmentArgs.fromBundle(safeArguments)
+
     private val signInClickListener = View.OnClickListener {
         requireComponents.services.accountsAuthFeature.beginAuthentication(requireContext())
         // TODO The sign-in web content populates session history,
@@ -73,8 +76,19 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
     }
 
     override fun onAuthenticated(account: OAuthAccount, authType: AuthType) {
-        FenixSnackbar.make(view!!, FenixSnackbar.LENGTH_SHORT)
-            .setText(requireContext().getString(R.string.sync_syncing_in_progress))
-            .show()
+        val snackbarText = requireContext().getString(R.string.sync_syncing_in_progress)
+        val snackbarLength = FenixSnackbar.LENGTH_SHORT
+
+        // Since the snackbar can be presented in BrowserFragment or in SettingsFragment we must
+        // base our display method on the padSnackbar argument
+        if (args.padSnackbar) {
+            FenixSnackbar.makeWithToolbarPadding(requireView(), snackbarLength)
+                .setText(snackbarText)
+                .show()
+        } else {
+            FenixSnackbar.make(requireView(), snackbarLength)
+                .setText(snackbarText)
+                .show()
+        }
     }
 }

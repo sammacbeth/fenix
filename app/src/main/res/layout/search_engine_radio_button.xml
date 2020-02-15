@@ -37,6 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/radio_button_padding_horizontal"
         android:layout_marginEnd="@dimen/radio_button_padding_horizontal"
+        android:textAlignment="viewStart"
         app:layout_constraintStart_toEndOf="@id/engine_icon"
         app:layout_constraintTop_toTopOf="@id/engine_icon"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -46,7 +47,7 @@
         android:layout_height="@dimen/glyph_button_height"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/content_description_menu"
-        android:src="@drawable/ic_menu"
+        app:srcCompat="@drawable/ic_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>

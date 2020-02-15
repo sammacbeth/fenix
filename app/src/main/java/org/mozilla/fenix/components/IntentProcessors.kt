@@ -15,7 +15,10 @@ import mozilla.components.feature.pwa.intent.WebAppIntentProcessor
 import mozilla.components.feature.pwa.intent.TrustedWebActivityIntentProcessor
 import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.support.migration.MigrationIntentProcessor
+import mozilla.components.support.migration.state.MigrationStore
 import org.mozilla.fenix.BuildConfig
+import org.mozilla.fenix.home.intent.FennecBookmarkShortcutsIntentProcessor
 import org.mozilla.fenix.test.Mockable
 
 /**
@@ -28,7 +31,8 @@ class IntentProcessors(
     private val sessionUseCases: SessionUseCases,
     private val searchUseCases: SearchUseCases,
     private val httpClient: Client,
-    private val customTabsStore: CustomTabsServiceStore
+    private val customTabsStore: CustomTabsServiceStore,
+    private val migrationStore: MigrationStore
 ) {
     /**
      * Provides intent processing functionality for ACTION_VIEW and ACTION_SEND intents.
@@ -62,7 +66,12 @@ class IntentProcessors(
                 apiKey = BuildConfig.DIGITAL_ASSET_LINKS_TOKEN,
                 store = customTabsStore
             ),
-            WebAppIntentProcessor(sessionManager, sessionUseCases.loadUrl, ManifestStorage(context))
+            WebAppIntentProcessor(sessionManager, sessionUseCases.loadUrl, ManifestStorage(context)),
+            FennecBookmarkShortcutsIntentProcessor(sessionManager, sessionUseCases.loadUrl)
         )
+    }
+
+    val migrationIntentProcessor by lazy {
+        MigrationIntentProcessor(migrationStore)
     }
 }

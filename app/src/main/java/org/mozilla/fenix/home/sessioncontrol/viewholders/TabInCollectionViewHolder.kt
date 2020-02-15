@@ -7,13 +7,12 @@ package org.mozilla.fenix.home.sessioncontrol.viewholders
 import android.graphics.Outline
 import android.view.View
 import android.view.ViewOutlineProvider
-import androidx.core.content.ContextCompat
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.tab_in_collection.*
 import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.support.ktx.android.util.dpToFloat
-import org.jetbrains.anko.backgroundColor
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getColorFromAttr
@@ -74,10 +73,10 @@ class TabInCollectionViewHolder(
 
         // If I'm the last one...
         if (isLastTab) {
-            view.background = ContextCompat.getDrawable(view.context, R.drawable.rounded_bottom_corners)
+            view.background = AppCompatResources.getDrawable(view.context, R.drawable.rounded_bottom_corners)
             divider_line.visibility = View.GONE
         } else {
-            view.backgroundColor = view.context.getColorFromAttr(R.attr.above)
+            view.setBackgroundColor(view.context.getColorFromAttr(R.attr.above))
             divider_line.visibility = View.VISIBLE
         }
     }

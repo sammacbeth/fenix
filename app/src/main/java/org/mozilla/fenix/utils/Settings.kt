@@ -4,6 +4,7 @@
 
 package org.mozilla.fenix.utils
 
+import android.accessibilityservice.AccessibilityServiceInfo.CAPABILITY_CAN_PERFORM_GESTURES
 import android.app.Application
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
@@ -23,8 +24,12 @@ import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.Config
 import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.R
+import org.mozilla.fenix.browser.browsingmode.BrowsingMode
+import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.components.metrics.MozillaProductDetector
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getPreferenceKey
+import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.settings.PhoneFeature
 import org.mozilla.fenix.settings.deletebrowsingdata.DeleteBrowsingDataOnQuitType
 import java.security.InvalidParameterException
@@ -43,6 +48,7 @@ class Settings private constructor(
         const val autoBounceMaximumCount = 2
         const val trackingProtectionOnboardingMaximumCount = 0
         const val FENIX_PREFERENCES = "fenix_preferences"
+
         private const val BLOCKED_INT = 0
         private const val ASK_TO_ALLOW_INT = 1
         private const val CFR_COUNT_CONDITION_FOCUS_INSTALLED = 1
@@ -201,9 +207,33 @@ class Settings private constructor(
 
     val shouldUseFixedTopToolbar: Boolean
         get() {
-            val accessibilityManager =
-                appContext.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
-            return accessibilityManager?.isTouchExplorationEnabled ?: false
+            return touchExplorationIsEnabled || switchServiceIsEnabled
+        }
+
+    var lastKnownMode: BrowsingMode = BrowsingMode.Normal
+        get() {
+            val lastKnownModeWasPrivate = preferences.getBoolean(
+                appContext.getPreferenceKey(R.string.pref_key_last_known_mode_private),
+                false
+            )
+
+            return if (lastKnownModeWasPrivate) {
+                BrowsingMode.Private
+            } else {
+                BrowsingMode.Normal
+            }
+        }
+
+        set(value) {
+            val lastKnownModeWasPrivate = (value == BrowsingMode.Private)
+
+            preferences.edit()
+                .putBoolean(
+                appContext.getPreferenceKey(R.string.pref_key_last_known_mode_private),
+                    lastKnownModeWasPrivate)
+                .apply()
+
+            field = value
         }
 
     var shouldDeleteBrowsingDataOnQuit by booleanPreference(
@@ -213,8 +243,36 @@ class Settings private constructor(
 
     var shouldUseBottomToolbar by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_toolbar_bottom),
-        default = true
+        // Default accessibility users to top toolbar
+        default = !touchExplorationIsEnabled && !switchServiceIsEnabled
     )
+
+    /**
+     * Check each active accessibility service to see if it can perform gestures, if any can,
+     * then it is *likely* a switch service is enabled. We are assuming this to be the case based on #7486
+     */
+    private val switchServiceIsEnabled: Boolean
+        get() {
+            val accessibilityManager =
+                appContext.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
+
+            accessibilityManager?.getEnabledAccessibilityServiceList(0)?.let { activeServices ->
+                for (service in activeServices) {
+                    if (service.capabilities.and(CAPABILITY_CAN_PERFORM_GESTURES) == 1) {
+                        return true
+                    }
+                }
+            }
+
+            return false
+        }
+
+    private val touchExplorationIsEnabled: Boolean
+        get() {
+            val accessibilityManager =
+                appContext.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
+            return accessibilityManager?.isTouchExplorationEnabled ?: false
+        }
 
     val toolbarSettingString: String
         get() = when {
@@ -328,6 +386,16 @@ class Settings private constructor(
         )
     }
 
+    var shouldPromptToSaveLogins by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_save_logins),
+        default = true
+    )
+
+    var shouldAutofillLogins by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_autofill_logins),
+        default = true
+    )
+
     var fxaSignedIn by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_fxa_signed_in),
         default = true
@@ -369,6 +437,21 @@ class Settings private constructor(
         ).apply()
     }
 
+    fun unsetOpenLinksInAPrivateTabIfNecessary() {
+        if (BrowsersCache.all(appContext).isDefaultBrowser) {
+            return
+        }
+
+        appContext.settings().openLinksInAPrivateTab = false
+        appContext.components.analytics.metrics.track(
+            Event.PreferenceToggled(
+                preferenceKey = appContext.getString(R.string.pref_key_open_links_in_a_private_tab),
+                enabled = false,
+                context = appContext
+            )
+        )
+    }
+
     private var showedPrivateModeContextualFeatureRecommender by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_showed_private_mode_cfr),
         default = false
@@ -397,4 +480,9 @@ class Settings private constructor(
 
             return false
         }
+
+    var openLinksInExternalApp by booleanPreference(
+        appContext.getPreferenceKey(R.string.pref_key_open_links_in_external_app),
+        default = false
+    )
 }

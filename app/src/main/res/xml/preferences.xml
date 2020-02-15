@@ -67,7 +67,7 @@
             app:isPreferenceVisible="false"
             android:icon="@drawable/ic_login"
             android:key="@string/pref_key_passwords"
-            android:title="@string/preferences_passwords" />
+            android:title="@string/preferences_passwords_logins_and_passwords" />
         <androidx.preference.Preference
             android:icon="@drawable/ic_private_browsing"
             android:key="@string/pref_key_add_private_browsing_shortcut"
@@ -88,9 +88,11 @@
             android:icon="@drawable/ic_data_collection"
             android:key="@string/pref_key_data_choices"
             android:title="@string/preferences_data_collection" />
-        <androidx.preference.Preference
-            android:key="@string/pref_key_privacy_link"
-            android:title="@string/preferences_privacy_link" />
+        <androidx.preference.SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/ic_app_links"
+            android:key="@string/pref_key_open_links_in_external_app"
+            android:title="@string/preferences_open_links_in_apps" />
         <androidx.preference.SwitchPreference
             android:defaultValue="false"
             android:icon="@drawable/ic_info"
@@ -98,6 +100,17 @@
             android:title="@string/preference_leakcanary"
             app:isPreferenceVisible="@bool/IS_DEBUG" />
     </androidx.preference.PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/preferences_category_advanced"
+        app:iconSpaceReserved="false"
+        android:key="@string/pref_key_advanced"
+        app:isPreferenceVisible="false">
+        <androidx.preference.Preference
+            android:icon="@drawable/ic_language"
+            android:key="@string/pref_key_language"
+            android:title="@string/preferences_language" />
+    </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/developer_tools_category"
@@ -112,10 +125,6 @@
     <androidx.preference.PreferenceCategory
         android:title="@string/preferences_category_about"
         app:iconSpaceReserved="false">
-        <androidx.preference.Preference
-            android:icon="@drawable/ic_help"
-            android:key="@string/pref_key_help"
-            android:title="@string/preferences_help" />
         <androidx.preference.Preference
             android:icon="@drawable/ic_bookmark_outline"
             android:key="@string/pref_key_rate"

@@ -6,7 +6,6 @@ package org.mozilla.fenix.browser
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -33,6 +32,7 @@ import kotlinx.coroutines.withContext
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
+import mozilla.components.concept.engine.prompt.ShareData
 import mozilla.components.feature.accounts.FxaCapability
 import mozilla.components.feature.accounts.FxaWebChannelFeature
 import mozilla.components.feature.app.links.AppLinksFeature
@@ -43,6 +43,7 @@ import mozilla.components.feature.downloads.DownloadsFeature
 import mozilla.components.feature.downloads.manager.FetchDownloadManager
 import mozilla.components.feature.intent.ext.EXTRA_SESSION_ID
 import mozilla.components.feature.prompts.PromptFeature
+import mozilla.components.feature.prompts.share.ShareDelegate
 import mozilla.components.feature.readerview.ReaderViewFeature
 import mozilla.components.feature.session.FullScreenFeature
 import mozilla.components.feature.session.SessionFeature
@@ -51,14 +52,15 @@ import mozilla.components.feature.session.SwipeRefreshFeature
 import mozilla.components.feature.sitepermissions.SitePermissions
 import mozilla.components.feature.sitepermissions.SitePermissionsFeature
 import mozilla.components.feature.sitepermissions.SitePermissionsRules
+import mozilla.components.service.sync.logins.DefaultLoginValidationDelegate
 import mozilla.components.support.base.feature.PermissionsFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.view.exitImmersiveModeIfNeeded
-import org.mozilla.fenix.Experiments
 import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.IntentReceiverActivity
+import org.mozilla.fenix.NavGraphDirections
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.readermode.DefaultReaderModeController
 import org.mozilla.fenix.components.FenixSnackbar
@@ -83,7 +85,6 @@ import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.sessionsOfType
 import org.mozilla.fenix.ext.settings
-import org.mozilla.fenix.isInExperiment
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.theme.ThemeManager
 
@@ -157,7 +158,7 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
             // browsing data on quit" is activated). After the deletion is over, the snackbar
             // is dismissed.
             val snackbar: FenixSnackbar? = requireActivity().getRootView()?.let { v ->
-                FenixSnackbar.make(v, Snackbar.LENGTH_INDEFINITE)
+                FenixSnackbar.makeWithToolbarPadding(v)
                     .setText(v.context.getString(R.string.deleting_browsing_data_in_progress))
             }
 
@@ -166,7 +167,11 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                 activity = requireActivity(),
                 snackbar = snackbar,
                 navController = findNavController(),
-                readerModeController = DefaultReaderModeController(readerViewFeature),
+                readerModeController = DefaultReaderModeController(
+                    readerViewFeature,
+                    (activity as HomeActivity).browsingModeManager.mode.isPrivate,
+                    view.readerViewControlsBar
+                ),
                 browsingModeManager = (activity as HomeActivity).browsingModeManager,
                 sessionManager = requireComponents.core.sessionManager,
                 findInPageLauncher = { findInPageIntegration.withFeature { it.launch() } },
@@ -280,12 +285,10 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                         download = download,
                         tryAgain = downloadFeature::tryAgain,
                         onCannotOpenFile = {
-                            FenixSnackbar.make(view, Snackbar.LENGTH_SHORT)
+                            FenixSnackbar.makeWithToolbarPadding(view, Snackbar.LENGTH_SHORT)
                                 .setText(context.getString(R.string.mozac_feature_downloads_could_not_open_file))
-                                .setAnchorView(browserToolbarView.getSnackbarAnchor())
                                 .show()
                         }
-
                     )
                     dialog.show()
                 }
@@ -302,8 +305,8 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                     context,
                     sessionManager = sessionManager,
                     sessionId = customTabSessionId,
-                    interceptLinkClicks = true,
-                    fragmentManager = parentFragmentManager
+                    fragmentManager = parentFragmentManager,
+                    launchInApp = { context.settings().openLinksInExternalApp }
                 ),
                 owner = this,
                 view = view
@@ -315,6 +318,28 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                     store = store,
                     customTabId = customTabSessionId,
                     fragmentManager = parentFragmentManager,
+                    loginValidationDelegate = DefaultLoginValidationDelegate(
+                        context.components.core.asyncPasswordsStorage,
+                        context.components.core.getSecureAbove22Preferences()
+                    ),
+                    isSaveLoginEnabled = {
+                        context.settings().shouldPromptToSaveLogins
+                    },
+                    shareDelegate = object : ShareDelegate {
+                        override fun showShareSheet(
+                            context: Context,
+                            shareData: ShareData,
+                            onDismiss: () -> Unit,
+                            onSuccess: () -> Unit
+                        ) {
+                            val directions = NavGraphDirections.actionGlobalShareFragment(
+                                data = arrayOf(shareData),
+                                showPage = true,
+                                sessionId = getSessionById()?.id
+                            )
+                            findNavController().navigate(directions)
+                        }
+                    },
                     onNeedToRequestPermissions = { permissions ->
                         requestPermissions(permissions, REQUEST_CODE_PROMPT_PERMISSIONS)
                     }),
@@ -365,12 +390,9 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                         FenixSnackbar.make(view.rootView, Snackbar.LENGTH_SHORT)
                             .setText(getString(R.string.full_screen_notification))
                             .show()
-                        activity?.requestedOrientation =
-                            ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
                         activity?.enterToImmersiveMode()
                         browserToolbarView.view.visibility = View.GONE
                     } else {
-                        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
                         activity?.exitImmersiveModeIfNeeded()
                         (activity as? HomeActivity)?.let { activity ->
                             activity.themeManager.applyStatusBarTheme(activity)
@@ -389,9 +411,14 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                     url: String,
                     triggeredByRedirect: Boolean,
                     triggeredByWebContent: Boolean
-                ): Boolean {
+                ) {
                     browserToolbarView.expand()
-                    return false
+                }
+            }, owner = viewLifecycleOwner)
+
+            sessionManager.register(observer = object : SessionManager.Observer {
+                override fun onSessionSelected(session: Session) {
+                    browserToolbarView.expand()
                 }
             }, owner = viewLifecycleOwner)
 
@@ -421,7 +448,8 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                 view.swipeRefresh.setOnChildScrollUpCallback { _, _ -> true }
             }
 
-            if (!requireContext().isInExperiment(Experiments.asFeatureWebChannelsDisabled)) {
+            @Suppress("ConstantConditionIf")
+            if (!FeatureFlags.asFeatureWebChannelsDisabled) {
                 webchannelIntegration.set(
                     feature = FxaWebChannelFeature(
                         requireContext(),
@@ -557,17 +585,20 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
 
     /**
      * Removes the session if it was opened by an ACTION_VIEW intent
-     * or if it has no more history
+     * or if it has a parent session and no more history
      */
     protected open fun removeSessionIfNeeded(): Boolean {
         getSessionById()?.let { session ->
             val sessionManager = requireComponents.core.sessionManager
             if (session.source == Session.Source.ACTION_VIEW) {
                 sessionManager.remove(session)
+                activity?.onBackPressed()
             } else {
                 val isLastSession =
                     sessionManager.sessionsOfType(private = session.private).count() == 1
-                sessionManager.remove(session, session.hasParentSession)
+                if (session.hasParentSession) {
+                    sessionManager.remove(session, true)
+                }
                 val goToOverview = isLastSession || !session.hasParentSession
                 return !goToOverview
             }
@@ -585,12 +616,19 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
     /**
      * Returns the top and bottom margins.
      */
-    protected abstract fun getEngineMargins(): Pair<Int, Int>
+    private fun getEngineMargins(): Pair<Int, Int> =
+        if (context?.settings()?.shouldUseBottomToolbar == true) {
+            val toolbarSize = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height)
+            0 to toolbarSize
+        } else {
+            0 to 0
+        }
 
     /**
-     * Returns the layout [android.view.Gravity] for the quick settings dialog.
+     * Returns the layout [android.view.Gravity] for the quick settings and ETP dialog.
      */
-    protected abstract fun getAppropriateLayoutGravity(): Int
+    protected fun getAppropriateLayoutGravity(): Int =
+        if (context?.settings()?.shouldUseBottomToolbar == true) Gravity.BOTTOM else Gravity.TOP
 
     protected fun updateLayoutMargins(inFullScreen: Boolean) {
         view?.swipeRefresh?.apply {
@@ -682,8 +720,8 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                 requireComponents.analytics.metrics.track(Event.AddBookmark)
 
                 view?.let { view ->
-                    FenixSnackbar.make(view, Snackbar.LENGTH_LONG)
-                        .setAnchorView(browserToolbarView.getSnackbarAnchor())
+                    FenixSnackbar.makeWithToolbarPadding(view)
+                        .setText(getString(R.string.bookmark_saved_snackbar))
                         .setAction(getString(R.string.edit_bookmark_snackbar_action)) {
                             nav(
                                 R.id.browserFragment,
@@ -692,7 +730,6 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Session
                                 )
                             )
                         }
-                        .setText(getString(R.string.bookmark_saved_snackbar))
                         .show()
                 }
             }

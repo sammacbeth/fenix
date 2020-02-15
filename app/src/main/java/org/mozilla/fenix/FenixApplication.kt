@@ -5,45 +5,41 @@
 package org.mozilla.fenix
 
 import android.annotation.SuppressLint
-import android.app.Application
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.StrictMode
 import androidx.annotation.CallSuper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.getSystemService
-import io.reactivex.plugins.RxJavaPlugins
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mozilla.appservices.Megazord
 import mozilla.components.concept.push.PushProcessor
 import mozilla.components.service.experiments.Experiments
-import mozilla.components.service.fretboard.Fretboard
-import mozilla.components.service.fretboard.source.kinto.KintoExperimentSource
-import mozilla.components.service.fretboard.storage.flatfile.FlatFileExperimentStorage
+import mozilla.components.service.glean.Glean
+import mozilla.components.service.glean.config.Configuration
+import mozilla.components.service.glean.net.ConceptFetchHttpUploader
 import mozilla.components.support.base.log.Log
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.base.log.sink.AndroidLogSink
 import mozilla.components.support.ktx.android.content.isMainProcess
 import mozilla.components.support.ktx.android.content.runOnlyInMainProcess
+import mozilla.components.support.locale.LocaleAwareApplication
 import mozilla.components.support.rusthttp.RustHttpConfig
 import mozilla.components.support.rustlog.RustLog
-import org.mozilla.fenix.GleanMetrics.ExperimentsMetrics
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.session.NotificationSessionObserver
 import org.mozilla.fenix.session.VisibilityLifecycleCallback
-import java.io.File
 
 @SuppressLint("Registered")
 @Suppress("TooManyFunctions")
-open class FenixApplication : Application() {
-    lateinit var fretboard: Fretboard
-    lateinit var experimentLoader: Deferred<Boolean>
+open class FenixApplication : LocaleAwareApplication() {
+    private val logger = Logger("FenixApplication")
 
     open val components by lazy { Components(this) }
 
@@ -63,6 +59,31 @@ open class FenixApplication : Application() {
             return
         }
 
+        // We need to always initialize Glean and do it early here.
+        // It is important that this initialization happens *here* before calling into
+        // setupInMainProcessOnly() which behaves differently for fenix and fennec builds.
+        val enableGlean = if (Config.channel.isFennec) {
+            // We are disabling Glean here because for Fennec builds we may not know yet whether
+            // we can enable telemetry yet. We first need to migrate the setting from Fennec to
+            // know the user's choice. The blocking migration in `MigratingFenixApplication` will
+            // notify glean once the value has been migrated.
+            false
+        } else {
+            // We initialize Glean with telemetry enabled (or disabled) early here so that we do not
+            // end up loosing data for components that collect telemetry very early.
+            settings().isTelemetryEnabled
+        }
+        logger.debug("Initializing Glean (uploadEnabled=$enableGlean, isFennec=${Config.channel.isFennec})")
+        Glean.initialize(
+            applicationContext = this,
+            configuration = Configuration(
+                channel = BuildConfig.BUILD_TYPE,
+                httpClient = ConceptFetchHttpUploader(
+                    lazy(LazyThreadSafetyMode.NONE) { components.core.client }
+                )),
+            uploadEnabled = enableGlean
+        )
+
         setupInMainProcessOnly()
     }
 
@@ -81,8 +102,17 @@ open class FenixApplication : Application() {
             val megazordSetup = setupMegazord()
 
             setDayNightTheme()
-            registerRxExceptionHandling()
             enableStrictMode()
+
+            // Enable the service-experiments component
+            if (settings().isExperimentationEnabled && Config.channel.isReleaseOrBeta) {
+                Experiments.initialize(
+                    applicationContext,
+                    mozilla.components.service.experiments.Configuration(
+                        httpClient = lazy(LazyThreadSafetyMode.NONE) { components.core.client }
+                    )
+                )
+            }
 
             // Make sure the engine is initialized and ready to use.
             components.core.engine.warmUp()
@@ -93,30 +123,6 @@ open class FenixApplication : Application() {
             if (!megazordSetup.isCompleted) {
                 runBlocking { megazordSetup.await(); }
             }
-        }
-
-        // We want to call this function as early as possible, but only once and
-        // on the main process, as it uses Gecko to fetch experiments from the server.
-        experimentLoader = loadExperiments()
-
-        // Enable the service-experiments component
-        if (settings().isExperimentationEnabled && Config.channel.isReleaseOrBeta) {
-            Experiments.initialize(
-                applicationContext,
-                mozilla.components.service.experiments.Configuration(
-                    httpClient = lazy(LazyThreadSafetyMode.NONE) { components.core.client }
-                )
-            )
-        }
-
-        // When the `fenix-test-2019-08-05` experiment is active, record its branch in Glean
-        // telemetry. This will be used to validate that the experiment system correctly enrolls
-        // clients and segments them into branches. Note that this will not take effect the first
-        // time the application has launched, since there won't be enough time for the experiments
-        // library to get a list of experiments. It will take effect the second time the
-        // application is launched.
-        Experiments.withExperiment("fenix-test-2019-08-05") { branchName ->
-            ExperimentsMetrics.activeExperiment.set(branchName)
         }
 
         setupLeakCanary()
@@ -131,11 +137,17 @@ open class FenixApplication : Application() {
 
         components.core.sessionManager.register(NotificationSessionObserver(this))
 
-        if ((System.currentTimeMillis() - settings().lastPlacesStorageMaintenance) > ONE_DAY_MILLIS) {
-            runStorageMaintenance()
-        }
+        // Storage maintenance disabled, for now, as it was interfering with background migrations.
+        // See https://github.com/mozilla-mobile/fenix/issues/7227 for context.
+        // if ((System.currentTimeMillis() - settings().lastPlacesStorageMaintenance) > ONE_DAY_MILLIS) {
+        //    runStorageMaintenance()
+        // }
     }
 
+    // See https://github.com/mozilla-mobile/fenix/issues/7227 for context.
+    // To re-enable this, we need to do so in a way that won't interfere with any startup operations
+    // which acquire reserved+ sqlite lock. Currently, Fennec migrations need to write to storage
+    // on startup, and since they run in a background service we can't simply order these operations.
     private fun runStorageMaintenance() {
         GlobalScope.launch(Dispatchers.IO) {
             // Bookmarks and history storage sit on top of the same db file so we only need to
@@ -145,38 +157,12 @@ open class FenixApplication : Application() {
         settings().lastPlacesStorageMaintenance = System.currentTimeMillis()
     }
 
-    private fun registerRxExceptionHandling() {
-        RxJavaPlugins.setErrorHandler {
-            throw it.cause ?: it
-        }
-    }
-
     protected open fun setupLeakCanary() {
         // no-op, LeakCanary is disabled by default
     }
 
     open fun updateLeakCanaryState(isEnabled: Boolean) {
         // no-op, LeakCanary is disabled by default
-    }
-
-    private fun loadExperiments(): Deferred<Boolean> {
-        val experimentsFile = File(filesDir, EXPERIMENTS_JSON_FILENAME)
-        val experimentSource = KintoExperimentSource(
-            EXPERIMENTS_BASE_URL,
-            EXPERIMENTS_BUCKET_NAME,
-            EXPERIMENTS_COLLECTION_NAME,
-            components.core.client
-        )
-        // TODO add ValueProvider to keep clientID in sync with Glean when ready
-        fretboard = Fretboard(experimentSource, FlatFileExperimentStorage(experimentsFile))
-
-        return GlobalScope.async(Dispatchers.IO) {
-            fretboard.loadExperiments()
-            Logger.debug("Bucket is ${fretboard.getUserBucket(this@FenixApplication)}")
-            Logger.debug("Experiments active: ${fretboard.getExperimentsMap(this@FenixApplication)}")
-            fretboard.updateExperiments()
-            return@async true
-        }
     }
 
     private fun setupPush() {
@@ -272,7 +258,7 @@ open class FenixApplication : Application() {
     }
 
     private fun enableStrictMode() {
-        if (BuildConfig.DEBUG) {
+        if (Config.channel.isDebug) {
             StrictMode.setThreadPolicy(
                 StrictMode.ThreadPolicy.Builder()
                     .detectAll()
@@ -291,9 +277,5 @@ open class FenixApplication : Application() {
             if (SDK_INT >= Build.VERSION_CODES.P) builder = builder.detectNonSdkApiUsage()
             StrictMode.setVmPolicy(builder.build())
         }
-    }
-
-    companion object {
-        private const val ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
     }
 }

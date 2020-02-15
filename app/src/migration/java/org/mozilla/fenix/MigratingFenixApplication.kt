@@ -4,6 +4,7 @@
 
 package org.mozilla.fenix
 
+import android.content.Context
 import kotlinx.coroutines.runBlocking
 import mozilla.components.support.migration.FennecMigrator
 
@@ -11,32 +12,54 @@ import mozilla.components.support.migration.FennecMigrator
  * An application class which knows how to migrate Fennec data.
  */
 class MigratingFenixApplication : FenixApplication() {
-    override fun setupInMainProcessOnly() {
-        migrateGeckoBlocking()
-
-        super.setupInMainProcessOnly()
-
-        migrateDataAsynchronously()
-    }
-
-    private fun migrateGeckoBlocking() {
-        val migrator = FennecMigrator.Builder(this, this.components.analytics.crashReporter)
-            .migrateGecko()
-            .build()
-
-        runBlocking {
-            migrator.migrateAsync().await()
-        }
-    }
-
-    private fun migrateDataAsynchronously() {
-        val migrator = FennecMigrator.Builder(this, this.components.analytics.crashReporter)
+    val migrator by lazy {
+        FennecMigrator.Builder(this, this.components.analytics.crashReporter)
             .migrateOpenTabs(this.components.core.sessionManager)
             .migrateHistory(this.components.core.historyStorage)
             .migrateBookmarks(this.components.core.bookmarksStorage)
+            .migrateLogins(
+                this.components.core.asyncPasswordsStorage,
+                this.components.core.passwordsEncryptionKey
+            )
             .migrateFxa(this.components.backgroundServices.accountManager)
+            .migrateAddons(this.components.core.engine)
+            .migrateTelemetryIdentifiers()
+            .build()
+    }
+
+    val migrationPushSubscriber by lazy {
+        MigrationPushRenewer(
+            components.backgroundServices.push,
+            components.migrationStore
+        )
+    }
+
+    override fun setupInMainProcessOnly() {
+        // These migrations need to run before regular initialization happens.
+        migrateBlocking()
+
+        // Fenix application initialization can happen now.
+        super.setupInMainProcessOnly()
+
+        // The rest of the migrations can happen now.
+        migrationPushSubscriber.start()
+        migrator.startMigrationIfNeeded(components.migrationStore, MigrationService::class.java)
+    }
+
+    private fun migrateBlocking() {
+        val migrator = FennecMigrator.Builder(this, this.components.analytics.crashReporter)
+            .migrateGecko()
+            // Telemetry may have been disabled in Fennec, so we need to migrate Settings first
+            // to correctly initialize telemetry.
+            .migrateSettings()
             .build()
 
-        migrator.migrateAsync()
+        runBlocking {
+            migrator.migrateAsync(components.migrationStore).await()
+        }
     }
+}
+
+fun Context.getMigratorFromApplication(): FennecMigrator {
+    return (applicationContext as MigratingFenixApplication).migrator
 }

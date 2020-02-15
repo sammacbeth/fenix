@@ -5,7 +5,6 @@
 package org.mozilla.fenix.customtabs
 
 import android.content.Context
-import android.view.Gravity
 import android.view.View
 import androidx.navigation.fragment.navArgs
 import kotlinx.android.synthetic.main.component_browser_top_toolbar.*
@@ -36,6 +35,7 @@ import org.mozilla.fenix.browser.FenixSnackbarDelegate
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
+import org.mozilla.fenix.ext.settings
 
 /**
  * Fragment used for browsing the web within external apps.
@@ -69,10 +69,12 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), UserInteractionHandler
                         activity = activity,
                         engineLayout = view.swipeRefresh,
                         onItemTapped = { browserInteractor.onBrowserToolbarMenuItemTapped(it) },
-                        isPrivate = (activity as HomeActivity).browsingModeManager.mode.isPrivate
+                        isPrivate = (activity as HomeActivity).browsingModeManager.mode.isPrivate,
+                        shouldReverseItems = !activity.settings().shouldUseBottomToolbar
                     ),
                     owner = this,
-                    view = view)
+                    view = view
+                )
 
                 windowFeature.set(
                     feature = CustomTabWindowFeature(
@@ -147,8 +149,6 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), UserInteractionHandler
                         }
                     }
             }
-
-            updateLayoutMargins(false)
         }
     }
 
@@ -187,11 +187,6 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), UserInteractionHandler
         }
     }
 
-    override fun getEngineMargins(): Pair<Int, Int> {
-        // Since the top toolbar is dynamic we don't want any margins
-        return 0 to 0
-    }
-
     override fun getContextMenuCandidates(
         context: Context,
         view: View
@@ -199,11 +194,6 @@ class ExternalAppBrowserFragment : BaseBrowserFragment(), UserInteractionHandler
         context,
         context.components.useCases.contextMenuUseCases,
         view,
-        FenixSnackbarDelegate(
-            view,
-            null
-        )
+        FenixSnackbarDelegate(view)
     )
-
-    override fun getAppropriateLayoutGravity() = Gravity.TOP
 }

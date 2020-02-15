@@ -80,6 +80,9 @@ class SearchFragment : Fragment(), UserInteractionHandler {
             ?.let(SearchFragmentArgs.Companion::fromBundle)
             ?.let { it.pastedText }
 
+        val searchAccessPoint = arguments
+                ?.let(SearchFragmentArgs.Companion::fromBundle)?.searchAccessPoint
+
         val view = inflater.inflate(R.layout.fragment_search, container, false)
         val url = session?.url.orEmpty()
         val currentSearchEngine = SearchEngineSource.Default(
@@ -107,7 +110,8 @@ class SearchFragment : Fragment(), UserInteractionHandler {
                     showHistorySuggestions = requireContext().settings().shouldShowHistorySuggestions,
                     showBookmarkSuggestions = requireContext().settings().shouldShowBookmarkSuggestions,
                     session = session,
-                    pastedText = pastedText
+                    pastedText = pastedText,
+                    searchAccessPoint = searchAccessPoint
                 )
             )
         }
@@ -144,8 +148,7 @@ class SearchFragment : Fragment(), UserInteractionHandler {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        searchScanButton.visibility = if (context?.hasCamera() == true) View.VISIBLE else View.GONE
-        layoutComponents(view.search_layout)
+        search_scan_button.visibility = if (context?.hasCamera() == true) View.VISIBLE else View.GONE
 
         qrFeature.set(
             QrFeature(
@@ -155,7 +158,7 @@ class SearchFragment : Fragment(), UserInteractionHandler {
                     requestPermissions(permissions, REQUEST_CODE_CAMERA_PERMISSIONS)
                 },
                 onScanResult = { result ->
-                    searchScanButton.isChecked = false
+                    search_scan_button.isChecked = false
                     activity?.let {
                         AlertDialog.Builder(it).apply {
                             val spannable = resources.getSpannable(
@@ -189,10 +192,14 @@ class SearchFragment : Fragment(), UserInteractionHandler {
             view = view
         )
 
-        view.searchScanButton.setOnClickListener {
+        view.search_scan_button.setOnClickListener {
             toolbarView.view.clearFocus()
             requireComponents.analytics.metrics.track(Event.QRScannerOpened)
             qrFeature.get()?.scan(R.id.container)
+        }
+
+        view.back_button.setOnClickListener {
+            findNavController().navigateUp()
         }
 
         val stubListener = ViewStub.OnInflateListener { _, inflated ->
@@ -222,6 +229,9 @@ class SearchFragment : Fragment(), UserInteractionHandler {
 
             inflated.text.text =
                 getString(R.string.search_suggestions_onboarding_text, getString(R.string.app_name))
+
+            inflated.title.text =
+                getString(R.string.search_suggestions_onboarding_title)
         }
 
         view.search_suggestions_onboarding.setOnInflateListener((stubListener))
@@ -284,7 +294,7 @@ class SearchFragment : Fragment(), UserInteractionHandler {
     override fun onBackPressed(): Boolean {
         return when {
             qrFeature.onBackPressed() -> {
-                view?.searchScanButton?.isChecked = false
+                view?.search_scan_button?.isChecked = false
                 toolbarView.view.requestFocus()
             }
             else -> awesomeBarView.isKeyboardDismissedProgrammatically
@@ -319,7 +329,7 @@ class SearchFragment : Fragment(), UserInteractionHandler {
                     if (context.isPermissionGranted(Manifest.permission.CAMERA)) {
                         permissionDidUpdate = true
                     } else {
-                        view?.searchScanButton?.isChecked = false
+                        view?.search_scan_button?.isChecked = false
                     }
                 }
             }
@@ -334,8 +344,12 @@ class SearchFragment : Fragment(), UserInteractionHandler {
     }
 
     private fun updateSearchSuggestionsHintVisibility(state: SearchFragmentState) {
-        view?.findViewById<View>(R.id.search_suggestions_onboarding)
-            ?.isVisible = state.showSearchSuggestionsHint
+        view?.apply {
+            findViewById<View>(R.id.search_suggestions_onboarding)?.isVisible = state.showSearchSuggestionsHint
+
+            search_suggestions_onboarding_divider?.isVisible =
+                search_with_shortcuts.isVisible && state.showSearchSuggestionsHint
+        }
     }
 
     companion object {

@@ -2,7 +2,6 @@
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import java.util.stream.Stream
 
 /**
  * Script for use when compiling a changelog. It will find all GH mentions in commit
@@ -27,7 +26,7 @@ val DEBUG = false
 
 println("Starting PrintMentionedIssuesAndPrs.kts")
 
-val tag = try { args[0] } catch(e: IndexOutOfBoundsException) { getHighestVersionedTag() }
+val tag = try { args[0] } catch (e: IndexOutOfBoundsException) { getHighestVersionedTag() }
 debug { "Last tag: $tag" }
 
 val commonCommit = getMostRecentCommonAncestorWithMaster(tag)
@@ -51,7 +50,7 @@ fun getHighestVersionedTag(): String {
 }
 
 fun getMostRecentCommonAncestorWithMaster(tag: String): String {
-    runCommand("git fetch --tags")
+    runCommand("git fetch $origin --tags")
     // TODO use origin master
     return runCommand("git merge-base master $tag").trim()
 }
@@ -91,7 +90,7 @@ fun runCommand(cmd: String, workingDir: File = File(".")): String {
         debug { "Err: ${proc.errorStream.bufferedReader().use { it.readText() }}" }
 
         return proc.inputStream.bufferedReader().use { it.readText() }
-    } catch(e: IOException) {
+    } catch (e: IOException) {
         e.printStackTrace()
         throw(e)
     }

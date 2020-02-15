@@ -8,8 +8,6 @@ import android.app.Activity
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.appcompat.content.res.AppCompatResources
-import com.airbnb.lottie.LottieCompositionFactory
-import com.airbnb.lottie.LottieDrawable
 import mozilla.components.browser.session.SessionManager
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.browser.toolbar.display.DisplayToolbar
@@ -19,7 +17,6 @@ import mozilla.components.support.base.feature.UserInteractionHandler
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.toolbar.ToolbarMenu
 import org.mozilla.fenix.ext.settings
-import org.mozilla.fenix.theme.ThemeManager
 
 class CustomTabsIntegration(
     sessionManager: SessionManager,
@@ -28,6 +25,7 @@ class CustomTabsIntegration(
     activity: Activity,
     engineLayout: View,
     onItemTapped: (ToolbarMenu.Item) -> Unit = {},
+    shouldReverseItems: Boolean,
     isPrivate: Boolean
 ) : LifecycleAwareFeature, UserInteractionHandler {
 
@@ -43,37 +41,43 @@ class CustomTabsIntegration(
             }
         }
 
-        val task = LottieCompositionFactory
-            .fromRawRes(
-                activity,
-                ThemeManager.resolveAttribute(R.attr.shieldLottieFile, activity)
-            )
-        task.addListener { result ->
-            val lottieDrawable = LottieDrawable()
-            lottieDrawable.composition = result
+        val uncoloredEtpShield = AppCompatResources.getDrawable(
+            activity,
+            R.drawable.ic_tracking_protection_enabled
+        )!!
 
-            toolbar.display.displayIndicatorSeparator = false
-            if (activity.settings().shouldUseTrackingProtection) {
-                toolbar.display.indicators = listOf(
-                    DisplayToolbar.Indicators.SECURITY,
-                    DisplayToolbar.Indicators.TRACKING_PROTECTION
-                )
-            } else {
-                toolbar.display.indicators = listOf(
-                    DisplayToolbar.Indicators.SECURITY
-                )
+        toolbar.display.icons = toolbar.display.icons.copy(
+            // Custom private tab backgrounds have bad contrast against the colored shield
+            trackingProtectionTrackersBlocked = uncoloredEtpShield,
+            trackingProtectionNothingBlocked = uncoloredEtpShield,
+            trackingProtectionException = AppCompatResources.getDrawable(
+                activity,
+                R.drawable.ic_tracking_protection_disabled
+            )!!
+        )
+
+        toolbar.display.displayIndicatorSeparator = false
+        if (activity.settings().shouldUseTrackingProtection) {
+            toolbar.display.indicators = listOf(
+                DisplayToolbar.Indicators.SECURITY,
+                DisplayToolbar.Indicators.TRACKING_PROTECTION
+            )
+        } else {
+            toolbar.display.indicators = listOf(
+                DisplayToolbar.Indicators.SECURITY
+            )
+        }
+
+        // If in private mode, override toolbar background to use private color
+        // See #5334
+        if (isPrivate) {
+            sessionManager.findSessionById(sessionId)?.apply {
+                customTabConfig = customTabConfig?.copy(toolbarColor = null)
             }
 
-            toolbar.display.icons = toolbar.display.icons.copy(
-                trackingProtectionTrackersBlocked = lottieDrawable,
-                trackingProtectionNothingBlocked = AppCompatResources.getDrawable(
-                    activity,
-                    R.drawable.ic_tracking_protection_enabled
-                )!!,
-                trackingProtectionException = AppCompatResources.getDrawable(
-                    activity,
-                    R.drawable.ic_tracking_protection_disabled
-                )!!
+            toolbar.background = AppCompatResources.getDrawable(
+                activity,
+                R.drawable.toolbar_background
             )
         }
 
@@ -92,6 +96,7 @@ class CustomTabsIntegration(
             activity,
             sessionManager,
             sessionId,
+            shouldReverseItems,
             onItemTapped = onItemTapped
         )
     }
@@ -103,22 +108,15 @@ class CustomTabsIntegration(
         menuBuilder = customTabToolbarMenu.menuBuilder,
         menuItemIndex = START_OF_MENU_ITEMS_INDEX,
         window = activity.window,
+        shareListener = { onItemTapped.invoke(ToolbarMenu.Item.Share) },
         closeListener = { activity.finish() }
     )
 
-    override fun start() {
-        feature.start()
-    }
-
-    override fun stop() {
-        feature.stop()
-    }
-
-    override fun onBackPressed(): Boolean {
-        return feature.onBackPressed()
-    }
+    override fun start() = feature.start()
+    override fun stop() = feature.stop()
+    override fun onBackPressed() = feature.onBackPressed()
 
     companion object {
-        const val START_OF_MENU_ITEMS_INDEX = 2
+        private const val START_OF_MENU_ITEMS_INDEX = 2
     }
 }

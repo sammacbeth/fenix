@@ -146,15 +146,20 @@ class DeleteBrowsingDataFragment : Fragment(R.layout.fragment_delete_browsing_da
 
         updateItemCounts()
 
-        FenixSnackbar.make(view!!, FenixSnackbar.LENGTH_SHORT)
+        FenixSnackbar.makeWithToolbarPadding(requireView(), FenixSnackbar.LENGTH_SHORT)
             .setText(resources.getString(R.string.preferences_delete_browsing_data_snackbar))
             .show()
 
         if (popAfter) viewLifecycleOwner.lifecycleScope.launch(
             Dispatchers.Main
         ) {
-            findNavController().popBackStack(R.id.homeFragment, false)
+            returnToDeletionOrigin()
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        progress_bar.visibility = View.GONE
     }
 
     private fun updateItemCounts() {
@@ -233,6 +238,46 @@ class DeleteBrowsingDataFragment : Fragment(R.layout.fragment_delete_browsing_da
             fragmentView.cached_files_item,
             fragmentView.site_permissions_item
         )
+    }
+    // If coming from Open Tab -> Settings, pop back to Home
+    // If coming from Home -> Settings, pop back to Settings
+    private fun returnToDeletionOrigin() {
+        // If Delete browsing data fragment isn't in the backstack
+        // then Android may have changed their naming convention
+        // and we want to prevent a crash by defaulting to pop home behavior
+        if (checkIfFragmentInBackStack(R.id.deleteBrowsingDataFragment)) {
+            // If Settings is in the backstack then we can continue with intended behavior
+            if (checkIfFragmentInBackStack(R.id.browserFragment)) findNavController().popBackStack(
+                R.id.homeFragment,
+                false
+            )
+            else findNavController().popBackStack()
+        } else {
+            findNavController().popBackStack(
+                R.id.homeFragment,
+                false
+            )
+        }
+    }
+
+    // For some reason, the only way you can tell if you came from
+    // BrowserFrag -> Settings OR BrowserFrag -> HomeFrag -> Settings is to check whether
+    // there is a browser fragment entry in the back stack. If there is, it means you came from BrowserFrag -> Settings
+    // if there isn't, it means you came from HomeFrag -> Settings
+    private fun checkIfFragmentInBackStack(res: Int): Boolean {
+        val backStackEntryCount = parentFragmentManager.backStackEntryCount
+        for (i in 0 until backStackEntryCount) {
+            if (getResIdFromBackstack(parentFragmentManager.getBackStackEntryAt(i).name) == res) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private fun getResIdFromBackstack(name: String?): Int {
+        val idString = name?.split("-")
+        return idString!![1].toInt()
     }
 
     companion object {

@@ -14,6 +14,7 @@ import org.junit.Ignore
 import org.junit.Test
 import org.mozilla.fenix.helpers.AndroidAssetDispatcher
 import org.mozilla.fenix.helpers.HomeActivityTestRule
+import org.mozilla.fenix.helpers.TestHelper
 import org.mozilla.fenix.ui.robots.homeScreen
 
 /**
@@ -93,7 +94,7 @@ class SettingsPrivacyTest {
             // PRIVACY
             verifyPrivacyHeading()
             verifyEnhancedTrackingProtectionButton()
-            verifyEnhancedTrackingProtectionValue()
+            verifyEnhancedTrackingProtectionValue("On")
             // Logins
             verifyLoginsButton()
             // drill down to submenu
@@ -103,8 +104,32 @@ class SettingsPrivacyTest {
             verifyDeleteBrowsingDataButton()
             verifyDeleteBrowsingDataOnQuitButton()
             verifyDataCollectionButton()
-            verifyPrivacyNoticeButton()
             verifyLeakCanaryButton()
+        }
+    }
+
+    // Tests only for initial state without signing in.
+    // For tests after singing in, see SyncIntegration test suite
+
+    @Test
+    fun loginsAndPasswordsTest() {
+        homeScreen {
+        }.openThreeDotMenu {
+        }.openSettings {
+            // Necessary to scroll a little bit for all screen sizes
+            TestHelper.scrollToElementByText("Logins and passwords")
+        }.openLoginsAndPasswordSubMenu {
+            verifyDefaultView()
+            verifyDefaultValueSyncLogins()
+        }.openSavedLogins {
+            verifySavedLoginsView()
+            tapSetupLater()
+            // Verify that logins list is empty
+            // Issue #7272 nothing is shown
+        }.goBack {
+        }.openSyncLogins {
+            verifyReadyToScanOption()
+            verifyUseEmailOption()
         }
     }
 
@@ -240,6 +265,11 @@ class SettingsPrivacyTest {
         // Return to home screen and verify that all tabs, history and collection are gone
         //
         // Verify xxx
+        //
+        // New: If coming from  tab -> settings -> delete browsing data
+        // then expect to return to home screen
+        // If coming from tab -> home -> settings -> delete browsing data
+        // then expect return to settings (after which you can return to home manually)
     }
 
     @Ignore("This is a stub test, ignore for now")

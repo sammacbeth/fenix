@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import mozilla.components.browser.search.SearchEngine
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.FenixSnackbar
+import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.components.searchengine.CustomSearchEngineStore
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.increaseTapArea
@@ -141,6 +142,7 @@ class AddSearchEngineFragment : Fragment(), CompoundButton.OnCheckedChangeListen
         }
     }
 
+    @Suppress("ComplexMethod")
     private fun createCustomEngine() {
         custom_search_engine_name_field.error = ""
         custom_search_engine_search_string_field.error = ""
@@ -167,15 +169,15 @@ class AddSearchEngineFragment : Fragment(), CompoundButton.OnCheckedChangeListen
             hasError = true
         }
 
-        if (searchString.isEmpty()) {
-            custom_search_engine_search_string_field
-                .error = resources.getString(R.string.search_add_custom_engine_error_empty_search_string)
-            hasError = true
+        custom_search_engine_search_string_field.error = when {
+            searchString.isEmpty() ->
+                resources.getString(R.string.search_add_custom_engine_error_empty_search_string)
+            !searchString.contains("%s") ->
+                resources.getString(R.string.search_add_custom_engine_error_missing_template)
+            else -> null
         }
 
-        if (!searchString.contains("%s")) {
-            custom_search_engine_search_string_field
-                .error = resources.getString(R.string.search_add_custom_engine_error_missing_template)
+        if (custom_search_engine_search_string_field.error != null) {
             hasError = true
         }
 
@@ -192,7 +194,7 @@ class AddSearchEngineFragment : Fragment(), CompoundButton.OnCheckedChangeListen
             when (result) {
                 SearchStringValidator.Result.CannotReach -> {
                     custom_search_engine_search_string_field.error = resources
-                        .getString(R.string.search_add_custom_engine_error_cannot_reach)
+                        .getString(R.string.search_add_custom_engine_error_cannot_reach, name)
                 }
                 SearchStringValidator.Result.Success -> {
                     CustomSearchEngineStore.addSearchEngine(
@@ -210,6 +212,7 @@ class AddSearchEngineFragment : Fragment(), CompoundButton.OnCheckedChangeListen
                             .show()
                     }
 
+                    context?.components?.analytics?.metrics?.track(Event.CustomEngineAdded)
                     findNavController().popBackStack()
                 }
             }

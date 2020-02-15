@@ -17,6 +17,7 @@ object TestAssetHelper {
     @Suppress("MagicNumber")
     val waitingTime: Long = TimeUnit.SECONDS.toMillis(15)
     val waitingTimeShort: Long = TimeUnit.SECONDS.toMillis(1)
+
     data class TestAsset(val url: Uri, val content: String)
 
     /**
@@ -29,7 +30,7 @@ object TestAssetHelper {
      */
     fun getGenericAssets(server: MockWebServer): List<TestAsset> {
         @Suppress("MagicNumber")
-        return (1..3).map {
+        return (1..4).map {
             TestAsset(
                 server.url("pages/generic$it.html").toString().toUri()!!,
                 "Page content: $it"
@@ -69,5 +70,17 @@ object TestAssetHelper {
         val content = "Page content: Globe.svg"
 
         return TestAsset(url, content)
+    }
+
+    fun getEnhancedTrackingProtectionAsset(server: MockWebServer): TestAsset {
+        val url = server.url("pages/etp.html").toString().toUri()!!
+
+        return TestAsset(url, "")
+    }
+
+    fun getImageAsset(server: MockWebServer): TestAsset {
+        val url = server.url("resources/rabbit.jpg").toString().toUri()!!
+
+        return TestAsset(url, "")
     }
 }

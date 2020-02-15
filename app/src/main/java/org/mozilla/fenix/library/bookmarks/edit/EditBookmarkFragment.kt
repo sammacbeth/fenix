@@ -18,14 +18,12 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
-import com.jakewharton.rxbinding3.widget.textChanges
-import com.uber.autodispose.AutoDispose
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.functions.BiFunction
-import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_edit_bookmark.*
+import androidx.navigation.fragment.findNavController
+import kotlinx.android.synthetic.main.fragment_edit_bookmark.bookmarkNameEdit
+import kotlinx.android.synthetic.main.fragment_edit_bookmark.bookmarkParentFolderSelector
+import kotlinx.android.synthetic.main.fragment_edit_bookmark.bookmarkUrlEdit
+import kotlinx.android.synthetic.main.fragment_edit_bookmark.bookmarkUrlLabel
+import kotlinx.android.synthetic.main.fragment_edit_bookmark.progress_bar_bookmark
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
@@ -47,7 +45,6 @@ import org.mozilla.fenix.ext.setToolbarColors
 import org.mozilla.fenix.ext.toShortUrl
 import org.mozilla.fenix.library.bookmarks.BookmarksSharedViewModel
 import org.mozilla.fenix.library.bookmarks.DesktopFolders
-import java.util.concurrent.TimeUnit
 
 /**
  * Menu to edit the name, URL, and location of a bookmark item.
@@ -66,9 +63,8 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
         setHasOptionsMenu(true)
     }
 
-    override fun onResume() {
-        super.onResume()
-
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         initToolbar()
 
         guidToEdit = EditBookmarkFragmentArgs.fromBundle(arguments!!).guidToEdit
@@ -99,26 +95,20 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
             bookmarkNode?.let { bookmarkNode ->
                 bookmarkNameEdit.setText(bookmarkNode.title)
                 bookmarkUrlEdit.setText(bookmarkNode.url)
-
-                if (sharedViewModel.selectedFolder != null && bookmarkNode.title != null) {
-                    updateBookmarkNode(bookmarkNode.title, bookmarkNode.url)
-                }
             }
 
             bookmarkParent?.let { node ->
-                    bookmarkParentFolderSelector.text = node.title
-                    bookmarkParentFolderSelector.setOnClickListener {
-                        sharedViewModel.selectedFolder = null
-                        nav(
-                            R.id.bookmarkEditFragment,
-                            EditBookmarkFragmentDirections
-                                .actionBookmarkEditFragmentToBookmarkSelectFolderFragment(null)
-                        )
-                    }
+                bookmarkParentFolderSelector.text = node.title
+                bookmarkParentFolderSelector.setOnClickListener {
+                    sharedViewModel.selectedFolder = null
+                    nav(
+                        R.id.bookmarkEditFragment,
+                        EditBookmarkFragmentDirections
+                            .actionBookmarkEditFragmentToBookmarkSelectFolderFragment(null)
+                    )
                 }
             }
-
-        updateBookmarkFromObservableInput()
+        }
     }
 
     private fun initToolbar() {
@@ -137,23 +127,7 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
         super.onPause()
         bookmarkNameEdit.hideKeyboard()
         bookmarkUrlEdit.hideKeyboard()
-    }
-
-    private fun updateBookmarkFromObservableInput() {
-        Observable.combineLatest(
-            bookmarkNameEdit.textChanges().skipInitialValue(),
-            bookmarkUrlEdit.textChanges().skipInitialValue(),
-            BiFunction { name: CharSequence, url: CharSequence ->
-                Pair(name.toString(), url.toString())
-            })
-            .filter { (name) -> name.isNotBlank() }
-            .debounce(debouncePeriodInMs, TimeUnit.MILLISECONDS)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .`as`(AutoDispose.autoDisposable(AndroidLifecycleScopeProvider.from(this@EditBookmarkFragment)))
-            .subscribe { (name, url) ->
-                updateBookmarkNode(name, url)
-            }
+        progress_bar_bookmark.visibility = View.GONE
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -166,6 +140,11 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
                 displayDeleteBookmarkDialog()
                 true
             }
+            R.id.save_bookmark_button -> {
+                updateBookmarkFromTextChanges()
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -185,17 +164,17 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
                         launch(Main) {
                             Navigation.findNavController(requireActivity(), R.id.container)
                                 .popBackStack()
-                            activity.getRootView()?.let { rootView ->
-                                bookmarkNode?.let {
-                                    FenixSnackbar.make(rootView, FenixSnackbar.LENGTH_SHORT)
-                                        .setText(
-                                            getString(
-                                                R.string.bookmark_deletion_snackbar_message,
-                                                it.url?.toShortUrl(context.components.publicSuffixList) ?: it.title
-                                            )
+
+                            bookmarkNode?.let { bookmark ->
+                                FenixSnackbar.makeWithToolbarPadding(activity.getRootView()!!)
+                                    .setText(
+                                        getString(
+                                            R.string.bookmark_deletion_snackbar_message,
+                                            bookmark.url?.toShortUrl(context.components.publicSuffixList)
+                                                ?: bookmark.title
                                         )
-                                        .show()
-                                }
+                                    )
+                                    .show()
                             }
                         }
                     }
@@ -204,6 +183,13 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
                 create()
             }.show()
         }
+    }
+
+    private fun updateBookmarkFromTextChanges() {
+        progress_bar_bookmark.visibility = View.VISIBLE
+        val nameText = bookmarkNameEdit.text.toString()
+        val urlText = bookmarkUrlEdit.text.toString()
+        updateBookmarkNode(nameText, urlText)
     }
 
     private fun updateBookmarkNode(title: String?, url: String?) {
@@ -232,9 +218,7 @@ class EditBookmarkFragment : Fragment(R.layout.fragment_edit_bookmark) {
                 }
             }
         }
-    }
-
-    companion object {
-        private const val debouncePeriodInMs = 500L
+        progress_bar_bookmark.visibility = View.INVISIBLE
+        findNavController().popBackStack()
     }
 }

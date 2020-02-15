@@ -5,6 +5,7 @@
 package org.mozilla.fenix.components.searchengine
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,16 +22,17 @@ import org.mozilla.fenix.ext.settings
 import java.util.Locale
 
 @SuppressWarnings("TooManyFunctions")
-class FenixSearchEngineProvider(
+open class FenixSearchEngineProvider(
     private val context: Context
 ) : SearchEngineProvider, CoroutineScope by CoroutineScope(Job() + Dispatchers.IO) {
-    private val baseSearchEngines = async {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    open val baseSearchEngines = async {
         AssetsSearchEngineProvider(LocaleSearchLocalizationProvider()).loadSearchEngines(context)
     }
 
-    private val bundledSearchEngines = async {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    open val bundledSearchEngines = async {
         val defaultEngineIdentifiers = baseSearchEngines.await().list.map { it.identifier }.toSet()
-
         AssetsSearchEngineProvider(
             LocaleSearchLocalizationProvider(),
             filters = listOf(object : SearchEngineFilter {
@@ -43,7 +45,8 @@ class FenixSearchEngineProvider(
         ).loadSearchEngines(context)
     }
 
-    private var customSearchEngines = async {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    open var customSearchEngines = async {
         CustomSearchEngineProvider().loadSearchEngines(context)
     }
 
@@ -56,6 +59,10 @@ class FenixSearchEngineProvider(
         return engines.list.find { it.name == selectedName } ?: engines.default ?: engines.list.first()
     }
 
+    /**
+     * @return a list of all SearchEngines that are currently active. These are the engines that
+     * are readily available throughout the app.
+     */
     fun installedSearchEngines(context: Context): SearchEngineList = runBlocking {
         val engineList = loadedSearchEngines.await()
         val installedIdentifiers = installedSearchEngineIdentifiers(context)
@@ -129,28 +136,28 @@ class FenixSearchEngineProvider(
         Context.MODE_PRIVATE
     )
 
-    private suspend fun installedSearchEngineIdentifiers(context: Context): Set<String> {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    suspend fun installedSearchEngineIdentifiers(context: Context): Set<String> {
         val prefs = prefs(context)
 
-        val identifiers = if (!prefs.contains(INSTALLED_ENGINES_KEY)) {
+        if (!prefs.contains(INSTALLED_ENGINES_KEY)) {
             val defaultSet = baseSearchEngines.await()
                 .list
                 .map { it.identifier }
                 .toSet()
 
             prefs.edit().putStringSet(INSTALLED_ENGINES_KEY, defaultSet).apply()
-            defaultSet
-        } else {
-            prefs(context).getStringSet(INSTALLED_ENGINES_KEY, setOf()) ?: setOf()
         }
 
+        val installedIdentifiers = prefs(context).getStringSet(INSTALLED_ENGINES_KEY, setOf()) ?: setOf()
         val customEngineIdentifiers = customSearchEngines.await().list.map { it.identifier }.toSet()
-        return identifiers + customEngineIdentifiers
+        return installedIdentifiers + customEngineIdentifiers
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     companion object {
-        private val BUNDLED_SEARCH_ENGINES = listOf("ecosia", "reddit", "startpage", "yahoo", "youtube")
-        private const val PREF_FILE = "fenix-search-engine-provider"
-        private const val INSTALLED_ENGINES_KEY = "fenix-installed-search-engines"
+        val BUNDLED_SEARCH_ENGINES = listOf("reddit", "youtube")
+        const val PREF_FILE = "fenix-search-engine-provider"
+        const val INSTALLED_ENGINES_KEY = "fenix-installed-search-engines"
     }
 }

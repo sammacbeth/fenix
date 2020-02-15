@@ -4,6 +4,8 @@
     <!-- App name for private browsing mode, only the "Private" portion should be localized. -->
     <string name="app_name_private_2">Yksityinen Firefox Preview</string>
 
+    <!-- App name for private browsing mode, only the "Private" portion should be localized. -->
+    <string name="app_name_private_3">Firefox Preview (yksityinen)</string>
     <!-- Home Fragment -->
     <!-- Content description (not visible, for screen readers etc.): "Three dot" menu button. -->
     <string name="content_description_menu">Lisää valintoja</string>
@@ -22,6 +24,13 @@
     <!-- Private Browsing -->
     <!-- Title for private session option -->
     <string name="private_browsing_title">Olet yksityisessä istunnossa</string>
+    <!-- Explanation for private browsing displayed to users on home view when they first enable private mode
+        The first parameter is the name of the app defined in app_name (for example: Fenix) -->
+    <string name="private_browsing_placeholder_description">
+         %1$s tyhjentää haku- ja selaushistoriasi, kun suljetut sovelluksen tai kaikki yksityiset välilehdet. Vaikka tämä ei tee sinusta anonyymia verkkosivustojen tai internetpalveluntarjoajan suuntaan,
+         se helpottaa verkossa tekemiesi asioiden piilottamisen muilta tätä laitetta käyttäviltä.
+
+    </string>
     <string name="private_browsing_common_myths">
        Yleiset myytit yksityisestä selaamisesta
     </string>
@@ -69,6 +78,8 @@
     <string name="browser_menu_desktop_site">Työpöytäsivusto</string>
     <!-- Browser menu toggle that adds a shortcut to the site on the device home screen. -->
     <string name="browser_menu_add_to_homescreen">Lisää aloitusnäytölle</string>
+    <!-- Browser menu toggle that installs a Progressive Web App shortcut to the site on the device home screen. -->
+    <string name="browser_menu_install_on_homescreen">Asenna</string>
     <!-- Browser menu button that opens the find in page menu -->
     <string name="browser_menu_find_in_page">Etsi sivulta</string>
     <!-- Browser menu button that creates a private tab -->
@@ -88,12 +99,28 @@
         The first parameter is the name of the app defined in app_name (for example: Fenix) -->
     <string name="browser_menu_open_in_fenix">Avaa sovelluksessa %1$s</string>
 
+    <!-- Browser menu text shown in custom tabs to indicate this is a Fenix tab
+        The first parameter is the name of the app defined in app_name (for example: Fenix) -->
+    <string name="browser_menu_powered_by">MAHDOLLISTAJANA %1$s</string>
+    <!-- Browser menu text shown in custom tabs to indicate this is a Fenix tab
+        The first parameter is the name of the app defined in app_name (for example: Fenix) -->
+    <string name="browser_menu_powered_by2">Mahdollistajana %1$s</string>
     <!-- Browser menu button to put the the current page in reader mode -->
     <string name="browser_menu_read">Lukunäkymä</string>
     <!-- Browser menu button to open the current page in an external app -->
     <string name="browser_menu_open_app_link">Avaa sovelluksessa</string>
     <!-- Browser menu button to configure reader mode appearance e.g. the used font type and size -->
     <string name="browser_menu_read_appearance">Ulkoasu</string>
+
+    <!-- Locale Settings Fragment -->
+    <!-- Content description for tick mark on selected language -->
+    <string name="a11y_selected_locale_content_description">Valittu kieli</string>
+    <!-- Content description for search icon -->
+    <string name="a11y_search_icon_content_description">Haku</string>
+    <!-- Text for default locale item -->
+    <string name="default_locale_text">Seuraa laitteen kieltä</string>
+    <!-- Placeholder text shown in the search bar before a user enters text -->
+    <string name="locale_search_hint">Hakukieli</string>
 
     <!-- Search Fragment -->
     <!-- Button in the search view that lets a user search by scanning a QR code -->
@@ -102,10 +129,23 @@
     <string name="search_shortcuts_button">Oikopolut</string>
     <!-- Button in the search view when shortcuts are displayed that takes a user to the search engine settings -->
     <string name="search_shortcuts_engine_settings">Hakukoneasetukset</string>
-    <!-- Header displayed when selecting a shortcut search engine -->
+    <!-- DEPRECATED: Header displayed when selecting a shortcut search engine -->
     <string name="search_shortcuts_search_with">Hae hakukoneella</string>
+    <!-- Header displayed when selecting a shortcut search engine -->
+    <string name="search_shortcuts_search_with_2">Tällä kertaa käytä hakuun:</string>
     <!-- Button in the search view that lets a user navigate to the site in their clipboard -->
     <string name="awesomebar_clipboard_title">Täytä linkki leikepöydältä</string>
+
+    <!-- Button in the search suggestions onboarding that allows search suggestions in private sessions -->
+    <string name="search_suggestions_onboarding_allow_button">Salli</string>
+    <!-- Button in the search suggestions onboarding that does not allow search suggestions in private sessions -->
+    <string name="search_suggestions_onboarding_do_not_allow_button">Älä salli</string>
+    <!-- Search suggestion onboarding hint title text -->
+    <string name="search_suggestions_onboarding_title">Sallitaanko hakuehdotukset yksityisissä istunnoissa?</string>
+    <!-- Search suggestion onboarding hint description text, first parameter is the name of the app defined in app_name (for example: Fenix)-->
+    <string name="search_suggestions_onboarding_text">%s jakaa kaiken osoitepalkkiin kirjoittamasi asettamallesi oletushakukoneelle.</string>
+    <!-- Search suggestion onboarding hint Learn more link text -->
+    <string name="search_suggestions_onboarding_learn_more_link">Lue lisää</string>
 
     <!-- Search Widget -->
     <!-- Text preview for smaller sized widgets -->
@@ -124,6 +164,8 @@
     <string name="preferences_default_search_engine">Oletushakukone</string>
     <!-- Preference for settings related to Search -->
     <string name="preferences_search">Haku</string>
+    <!-- Preference for settings related to Search address bar -->
+    <string name="preferences_search_address_bar">Osoitepalkki</string>
     <!-- Preference linking to help about Fenix -->
     <string name="preferences_help">Ohje</string>
     <!-- Preference link to rating Fenix on the Play Store -->
@@ -159,6 +201,8 @@
     <string name="preferences_category_account">Tili</string>
     <!-- Preference shown on banner to sign into account -->
     <string name="preferences_sign_in">Kirjaudu sisään</string>
+    <!-- Preference for changing where the toolbar is positioned -->
+    <string name="preferences_toolbar">Työkalupalkki</string>
     <!-- Preference for changing default theme to dark or light mode -->
     <string name="preferences_theme">Teema</string>
     <!-- Preference description for banner about signing in -->
@@ -179,8 +223,12 @@
     <string name="developer_tools_category">Kehittäjätyökalut</string>
     <!-- Preference for developers -->
     <string name="preferences_remote_debugging">Etävianjäljitys USB:n kautta</string>
+    <!-- Preference title for switch preference to show search shortcuts -->
+    <string name="preferences_show_search_shortcuts">Näytä hakuoikopolut</string>
     <!-- Preference title for switch preference to show search suggestions -->
     <string name="preferences_show_search_suggestions">Näytä hakuehdotukset</string>
+    <!-- Preference title for switch preference to show search suggestions also in private mode -->
+    <string name="preferences_show_search_suggestions_in_private">Näytä yksityisissä istunnoissa</string>
     <!-- Preference title for switch preference to show a clipboard suggestion when searching -->
     <string name="preferences_show_clipboard_suggestions">Näytä leikepöydän ehdotukset</string>
     <!-- Preference title for switch preference to suggest browsing history when searching -->
@@ -189,6 +237,9 @@
     <string name="preferences_search_bookmarks">Etsi kirjanmerkeistä</string>
     <!-- Preference for account settings -->
     <string name="preferences_account_settings">Tilin asetukset</string>
+
+    <!-- Preference for open links in third party apps -->
+    <string name="preferences_open_links_in_apps">Avaa linkit sovelluksissa</string>
 
     <!-- Account Preferences -->
     <!-- Preference for triggering sync -->
@@ -296,6 +347,12 @@
     <!-- Button to cancel pairing -->
     <string name="pair_cancel">Peruuta</string>
 
+    <!-- Toolbar Preferences -->
+    <!-- Preference for using top toolbar -->
+    <string name="preference_top_toolbar">Ylhäällä</string>
+    <!-- Preference for using bottom toolbar -->
+    <string name="preference_bottom_toolbar">Alhaalla</string>
+
     <!-- Theme Preferences -->
     <!-- Preference for using light theme -->
     <string name="preference_light_theme">Vaalea</string>
@@ -343,6 +400,8 @@
     <string name="tab_header_label">Avoimet välilehdet</string>
     <!-- Title for the list of tabs in the current private session -->
     <string name="tabs_header_private_title">Yksityinen istunto</string>
+    <!-- Title for the list of tabs in the current private session -->
+    <string name="tabs_header_private_tabs_title">Yksityiset välilehdet</string>
     <!-- Content description (not visible, for screen readers etc.): Add tab button. Adds a news tab when pressed -->
     <string name="add_tab">Lisää välilehti</string>
     <!-- Content description (not visible, for screen readers etc.): Close tab button. Closes the current session when pressed -->
@@ -628,10 +687,14 @@
     <string name="notification_pbm_channel_name">Yksityisen selauksen istunto</string>
     <!-- Text shown in the notification that pops up to remind the user that a private browsing session is active. -->
     <string name="notification_pbm_delete_text">Poista yksityiset välilehdet</string>
+    <!-- Text shown in the notification that pops up to remind the user that a private browsing session is active. -->
+    <string name="notification_pbm_delete_text_2">Sulje yksityiset välilehdet</string>
     <!-- Notification action to open Fenix and resume the current browsing session. -->
     <string name="notification_pbm_action_open">Avaa</string>
     <!-- Notification action to delete all current private browsing sessions AND switch to Fenix (bring it to the foreground) -->
     <string name="notification_pbm_action_delete_and_open">Poista ja avaa</string>
+    <!-- Name of the "Powered by Fenix" notification channel. Displayed in the "App notifications" system settings for the app -->
+    <string name="notification_powered_by_channel_name">Mahdollistajana</string>
     <!-- Text shown in snackbar when user deletes a collection -->
     <string name="snackbar_collection_deleted">Kokoelma poistettu</string>
     <!-- Text shown in snackbar when user renames a collection -->
@@ -764,6 +827,10 @@
     <!-- text for the firefox account onboarding card header
     The first parameter is the name of the app (e.g. Firefox Preview) -->
     <string name="onboarding_firefox_account_header">Ota kaikki irti %sista.</string>
+    <!-- text for the firefox account onboarding card header when we detect you're already signed in to
+        another Firefox browser. (The word `Firefox` should not be translated)
+        The first parameter is the email of the detected user's account -->
+    <string name="onboarding_firefox_account_auto_signin_header_2">Olet kirjautunut tilillä %s toiseen Firefox-selaimeen tällä puhelimessa. Haluatko kirjautua sisään tällä tilillä?</string>
     <!-- text for the button to confirm automatic sign-in -->
     <string name="onboarding_firefox_account_auto_signin_confirm">Kyllä, kirjaa minut sisään</string>
     <!-- text for the automatic sign-in button while signing in is in process -->
@@ -790,6 +857,11 @@
    </string>
     <!-- text for the privacy notice onboarding card header -->
     <string name="onboarding_privacy_notice_header">Yksityisyytesi</string>
+    <!-- text for the privacy notice onboarding card description
+    The first parameter is the name of the app (e.g. Firefox Preview) -->
+    <string name="onboarding_privacy_notice_description">%s on suunniteltu antamaan sinulle päätösvalta sen suhteen,
+     mitä jaat verkossa ja mitä jaat kanssamme.
+    </string>
     <!-- Text for the button to read the privacy notice -->
     <string name="onboarding_privacy_notice_read_button">Lue yksityisyyskäytäntömme</string>
 
@@ -848,11 +920,13 @@
     <!-- Preference for enhanced tracking protection for the standard protection settings -->
     <string name="preference_enhanced_tracking_protection_standard_option">Tavallinen</string>
     <!-- Preference for enhanced tracking protection for the standard protection settings -->
-    <string name="preference_enhanced_tracking_protection_standard">Normaali (suositeltu)</string>
+    <string name="preference_enhanced_tracking_protection_standard">Tavallinen (suositeltu)</string>
     <!-- Preference description for enhanced tracking protection for the standard protection settings -->
     <string name="preference_enhanced_tracking_protection_standard_description">Tasapainoa suojauksen ja suorituskyvyn välillä.</string>
     <!-- Preference description for enhanced tracking protection for the standard protection settings -->
     <string name="preference_enhanced_tracking_protection_standard_description_2">Sivut latautuvat normaalisti, mutta vähemmän seuraimia estetään.</string>
+    <!--  Accessibility text for the Standard protection information icon  -->
+    <string name="preference_enhanced_tracking_protection_standard_info_button">Mitä tavallinen seurannan suojaus estää</string>
     <!-- Preference for enhanced tracking protection for the strict protection settings -->
     <string name="preference_enhanced_tracking_protection_strict">Tiukka</string>
     <!-- Preference for enhanced tracking protection for the strict protection settings, default setting -->
@@ -863,6 +937,8 @@
     <string name="preference_enhanced_tracking_protection_strict_recommended">Tiukka (suositeltu)</string>
     <!-- Preference description for enhanced tracking protection for the strict protection settings -->
     <string name="preference_enhanced_tracking_protection_strict_description">Vahvempi suojaus, mutta jotkin sivustot tai sisällöt voivat rikkoutua.</string>
+    <!--  Accessibility text for the Strict protection information icon  -->
+    <string name="preference_enhanced_tracking_protection_strict_info_button">Mitä tiukka seurannan suojaus estää</string>
     <!-- Header for categories that are being blocked by current Enhanced Tracking Protection settings -->
     <string name="enhanced_tracking_protection_blocked">Estetty</string>
     <!-- Header for categories that are being not being blocked by current Enhanced Tracking Protection settings -->
@@ -887,6 +963,8 @@
     <string name="etp_tracking_content_title">Seurantaan tarkoitettu sisältö</string>
     <!-- Description of tracking content that can be blocked by Enhanced Tracking Protection -->
     <string name="etp_tracking_content_description">Estää lataamasta ulkopuolisia mainoksia, videoita ja muuta sisältöä, joka sisältää seurantakoodin. Voi vaikuttaa joidenkin verkkosivustojen toimimiseen.</string>
+    <!-- Enhanced Tracking Protection Onboarding Message shown in a dialog above the toolbar. The first parameter is the name of the application (For example: Fenix) -->
+    <string name="etp_onboarding_message_2">%s estää seuraimia tällä sivustolla, kun kilpi on väriltään liila. Napauta kilpeä nähdäksesi mitä estetään.</string>
     <!-- Enhanced Tracking Protection message that protection is currently on for this site -->
     <string name="etp_panel_on">Suojaukset ovat PÄÄLLÄ tällä sivustolla</string>
     <!-- Enhanced Tracking Protection message that protection is currently off for this site -->
@@ -902,6 +980,17 @@
     <!-- Open source licenses page title
     The first parameter is the app name -->
     <string name="open_source_licenses_title">%s | Avoimen lähdekoodin kirjastot</string>
+
+    <!-- About page link text to open support link -->
+    <string name="about_support">Tuki</string>
+    <!-- About page link text to open privacy notice link -->
+    <string name="about_privacy_notice">Tietosuojakäytäntö</string>
+    <!-- About page link text to open know your rights link -->
+    <string name="about_know_your_rights">Tunne oikeutesi</string>
+    <!-- About page link text to open licensing information link -->
+    <string name="about_licensing_information">Lisenssitiedot</string>
+    <!-- About page link text to open a screen with libraries that are used -->
+    <string name="about_other_open_source_libraries">Käyttämämme kirjastot</string>
 
     <!-- Content description of the tab counter toolbar button when one tab is open -->
     <string name="tab_counter_content_description_one_tab">1 välilehti</string>
@@ -1014,6 +1103,9 @@
     <!-- Title for Accessibility Force Enable Zoom Preference -->
     <string name="preference_accessibility_force_enable_zoom">Lähennä kaikilla sivustoilla</string>
 
+    <!-- Summary for Accessibility Force Enable Zoom Preference -->
+    <string name="preference_accessibility_force_enable_zoom_summary">Ota käyttöön salliaksesi nipistämisen ja zoomauksen, jopa niillä sivustoilla mitkä eivät tuet tätä elettä.</string>
+
     <!-- Title of the Add search engine screen -->
     <string name="search_engine_add_custom_search_engine_title">Lisää hakukone</string>
     <!-- Title of the Edit search engine screen -->
@@ -1028,9 +1120,13 @@
     <string name="search_engine_delete">Poista</string>
 
     <!-- Text for the button to create a custom search engine on the Add search engine screen -->
-    <string name="search_add_custom_engine_label">Mukautettu</string>
+    <string name="search_add_custom_engine_label_other">Muu</string>
     <!-- Placeholder text shown in the Search Engine Name TextField before a user enters text -->
     <string name="search_add_custom_engine_name_hint">Nimi</string>
+    <!-- Placeholder text shown in the Search String TextField before a user enters text -->
+    <string name="search_add_custom_engine_search_string_hint">Käytettävä hakujono</string>
+    <!-- Description text for the Search String TextField. The %s is part of the string -->
+    <string name="search_add_custom_engine_search_string_example">Korvaa kysely käyttäen ”%s”. Esimerkki:\nhttps://www.google.com/search?q=%s</string>
     <!-- Text for the button to learn more about adding a custom search engine -->
     <string name="search_add_custom_engine_learn_more_label">Lue lisää</string>
 
@@ -1038,6 +1134,10 @@
     <string name="search_add_custom_engine_error_empty_name">Anna hakukoneen nimi</string>
     <!-- Text shown when a user tries to add a search engine that already exists -->
     <string name="search_add_custom_engine_error_existing_name">Hakukone nimeltä ”%s” on jo olemassa.</string>
+    <!-- Text shown when a user leaves the search string field empty -->
+    <string name="search_add_custom_engine_error_empty_search_string">Kirjoita hakujono</string>
+    <!-- Text shown when a user leaves out the required template string -->
+    <string name="search_add_custom_engine_error_missing_template">Varmista, että hakujono vastaa esimerkin muotoilua</string>
     <!-- Text shown when we aren't able to validate the custom search query. The first parameter is the url of the custom search engine -->
     <string name="search_add_custom_engine_error_cannot_reach">Virhe yhdistäessä hakukoneeseen ”%s”</string>
     <!-- Text shown when a user creates a new search engine -->

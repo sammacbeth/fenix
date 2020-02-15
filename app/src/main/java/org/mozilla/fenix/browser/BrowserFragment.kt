@@ -6,14 +6,10 @@ package org.mozilla.fenix.browser
 
 import android.content.Context
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.RadioButton
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.content.ContextCompat
 import androidx.transition.TransitionInflater
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_browser.*
@@ -29,7 +25,6 @@ import mozilla.components.feature.tabs.WindowFeature
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
-import org.jetbrains.anko.dimen
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.FenixSnackbar
@@ -102,12 +97,6 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
                 view = view
             )
 
-            if ((activity as HomeActivity).browsingModeManager.mode.isPrivate) {
-                // We need to update styles for private mode programmatically for now:
-                // https://github.com/mozilla-mobile/android-components/issues/3400
-                themeReaderViewControlsForPrivateMode(view.readerViewControlsBar)
-            }
-
             consumeFrom(browserFragmentStore) {
                 browserToolbarView.update(it)
             }
@@ -130,7 +119,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         val browserEngine = swipeRefresh.layoutParams as CoordinatorLayout.LayoutParams
 
         browserEngine.bottomMargin = if (requireContext().settings().shouldUseBottomToolbar) {
-            requireContext().dimen(R.dimen.browser_toolbar_height)
+            requireContext().resources.getDimensionPixelSize(R.dimen.browser_toolbar_height)
         } else {
             0
         }
@@ -191,43 +180,6 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         }
     }
 
-    override fun getEngineMargins(): Pair<Int, Int> {
-        val toolbarSize = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height)
-        return 0 to toolbarSize
-    }
-
-    override fun getAppropriateLayoutGravity() = Gravity.BOTTOM
-
-    private fun themeReaderViewControlsForPrivateMode(view: View) = with(view) {
-        listOf(
-            R.id.mozac_feature_readerview_font_size_decrease,
-            R.id.mozac_feature_readerview_font_size_increase
-        ).map {
-            findViewById<Button>(it)
-        }.forEach {
-            it.setTextColor(
-                ContextCompat.getColorStateList(
-                    context,
-                    R.color.readerview_private_button_color
-                )
-            )
-        }
-
-        listOf(
-            R.id.mozac_feature_readerview_font_serif,
-            R.id.mozac_feature_readerview_font_sans_serif
-        ).map {
-            findViewById<RadioButton>(it)
-        }.forEach {
-            it.setTextColor(
-                ContextCompat.getColorStateList(
-                    context,
-                    R.color.readerview_private_radio_color
-                )
-            )
-        }
-    }
-
     private val collectionStorageObserver = object : TabCollectionStorage.Observer {
         override fun onCollectionCreated(title: String, sessions: List<Session>) {
             showTabSavedToCollectionSnackbar()
@@ -239,9 +191,8 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 
         private fun showTabSavedToCollectionSnackbar() {
             view?.let { view ->
-                FenixSnackbar.make(view, Snackbar.LENGTH_SHORT)
+                FenixSnackbar.makeWithToolbarPadding(view, Snackbar.LENGTH_SHORT)
                     .setText(view.context.getString(R.string.create_collection_tab_saved))
-                    .setAnchorView(browserToolbarView.getSnackbarAnchor())
                     .show()
             }
         }
@@ -255,10 +206,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         context.components.useCases.tabsUseCases,
         context.components.useCases.contextMenuUseCases,
         view,
-        FenixSnackbarDelegate(
-            view,
-            browserToolbarView.view
-        )
+        FenixSnackbarDelegate(view)
     )
 
     companion object {

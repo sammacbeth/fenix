@@ -23,6 +23,7 @@ import kotlinx.coroutines.MainScope
 import mozilla.components.browser.search.SearchEngine
 import mozilla.components.browser.search.provider.SearchEngineList
 import org.mozilla.fenix.R
+import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.components.searchengine.CustomSearchEngineStore
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getRootView
@@ -162,27 +163,37 @@ abstract class SearchEngineListPreference @JvmOverloads constructor(
     }
 
     private fun deleteSearchEngine(context: Context, engine: SearchEngine) {
+        val isDefaultEngine = engine == context.components.search.provider.getDefaultEngine(context)
+        val initialEngineList = searchEngineList.copy()
+        val initialDefaultEngine = searchEngineList.default
+
+        context.components.search.provider.uninstallSearchEngine(context, engine)
+
         MainScope().allowUndo(
             view = context.getRootView()!!,
             message = context
                 .getString(R.string.search_delete_search_engine_success_message, engine.name),
             undoActionTitle = context.getString(R.string.snackbar_deleted_undo),
             onCancel = {
-                searchEngineList = context.components.search.provider.installedSearchEngines(context)
+                context.components.search.provider.installSearchEngine(context, engine)
+
+                searchEngineList = initialEngineList.copy(
+                    default = initialDefaultEngine
+                )
 
                 refreshSearchEngineViews(context)
             },
             operation = {
-                val defaultEngine = context.components.search.provider.getDefaultEngine(context)
-                context.components.search.provider.uninstallSearchEngine(context, engine)
-
-                if (engine == defaultEngine) {
+                if (isDefaultEngine) {
                     context.settings().defaultSearchEngineName = context
                         .components
                         .search
                         .provider
                         .getDefaultEngine(context)
                         .name
+                }
+                if (CustomSearchEngineStore.isCustomSearchEngine(context, engine.identifier)) {
+                    context.components.analytics.metrics.track(Event.CustomEngineDeleted)
                 }
                 refreshSearchEngineViews(context)
             }

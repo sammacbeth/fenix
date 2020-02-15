@@ -8,12 +8,12 @@ import android.graphics.Bitmap
 import android.graphics.Outline
 import android.view.View
 import android.view.ViewOutlineProvider
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.tab_list_row.*
 import mozilla.components.feature.media.state.MediaState
 import mozilla.components.support.ktx.android.util.dpToFloat
-import org.jetbrains.anko.imageBitmap
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.metrics.Event
 import org.mozilla.fenix.ext.components
@@ -51,12 +51,12 @@ class TabViewHolder(
         play_pause_button.setOnClickListener {
             when (tab?.mediaState) {
                 is MediaState.Playing -> {
-                    it.context.components.analytics.metrics.track(Event.TabMediaPlay)
+                    it.context.components.analytics.metrics.track(Event.TabMediaPause)
                     interactor.onPauseMediaClicked()
                 }
 
                 is MediaState.Paused -> {
-                    it.context.components.analytics.metrics.track(Event.TabMediaPause)
+                    it.context.components.analytics.metrics.track(Event.TabMediaPlay)
                     interactor.onPlayMediaClicked()
                 }
             }
@@ -98,11 +98,11 @@ class TabViewHolder(
             if (mediaState is MediaState.Playing) {
                 play_pause_button.contentDescription =
                     context.getString(R.string.mozac_feature_media_notification_action_pause)
-                setImageDrawable(context.getDrawable(R.drawable.pause_with_background))
+                setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.pause_with_background))
             } else {
                 play_pause_button.contentDescription =
                     context.getString(R.string.mozac_feature_media_notification_action_play)
-                setImageDrawable(context.getDrawable(R.drawable.play_with_background))
+                setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.play_with_background))
             }
         }
     }
@@ -122,7 +122,7 @@ class TabViewHolder(
         if (icon == null) {
             favicon_image.context.components.core.icons.loadIntoView(favicon_image, url)
         } else {
-            favicon_image.imageBitmap = icon
+            favicon_image.setImageBitmap(icon)
         }
     }
 

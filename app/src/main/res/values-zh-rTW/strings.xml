@@ -74,6 +74,8 @@
     <string name="browser_menu_desktop_site">桌面版網站</string>
     <!-- Browser menu toggle that adds a shortcut to the site on the device home screen. -->
     <string name="browser_menu_add_to_homescreen">新增至裝置主畫面</string>
+    <!-- Browser menu toggle that installs a Progressive Web App shortcut to the site on the device home screen. -->
+    <string name="browser_menu_install_on_homescreen">安裝</string>
     <!-- Browser menu button that opens the find in page menu -->
     <string name="browser_menu_find_in_page">在頁面中搜尋</string>
     <!-- Browser menu button that creates a private tab -->
@@ -107,6 +109,16 @@
     <!-- Browser menu button to configure reader mode appearance e.g. the used font type and size -->
     <string name="browser_menu_read_appearance">外觀設定</string>
 
+    <!-- Locale Settings Fragment -->
+    <!-- Content description for tick mark on selected language -->
+    <string name="a11y_selected_locale_content_description">選擇的語言</string>
+    <!-- Content description for search icon -->
+    <string name="a11y_search_icon_content_description">搜尋</string>
+    <!-- Text for default locale item -->
+    <string name="default_locale_text">跟隨裝置語言</string>
+    <!-- Placeholder text shown in the search bar before a user enters text -->
+    <string name="locale_search_hint">搜尋語言</string>
+
     <!-- Search Fragment -->
     <!-- Button in the search view that lets a user search by scanning a QR code -->
     <string name="search_scan_button">掃描</string>
@@ -114,8 +126,10 @@
     <string name="search_shortcuts_button">捷徑</string>
     <!-- Button in the search view when shortcuts are displayed that takes a user to the search engine settings -->
     <string name="search_shortcuts_engine_settings">搜尋引擎設定</string>
-    <!-- Header displayed when selecting a shortcut search engine -->
+    <!-- DEPRECATED: Header displayed when selecting a shortcut search engine -->
     <string name="search_shortcuts_search_with">使用下列引擎搜尋</string>
+    <!-- Header displayed when selecting a shortcut search engine -->
+    <string name="search_shortcuts_search_with_2">這次使用下列搜尋引擎搜尋:</string>
     <!-- Button in the search view that lets a user navigate to the site in their clipboard -->
     <string name="awesomebar_clipboard_title">開啟剪貼簿中的鏈結</string>
 
@@ -220,6 +234,9 @@
     <string name="preferences_search_bookmarks">搜尋書籤</string>
     <!-- Preference for account settings -->
     <string name="preferences_account_settings">帳號設定</string>
+
+    <!-- Preference for open links in third party apps -->
+    <string name="preferences_open_links_in_apps">用 App 開啟鏈結</string>
 
     <!-- Account Preferences -->
     <!-- Preference for triggering sync -->
@@ -975,6 +992,17 @@
     The first parameter is the app name -->
     <string name="open_source_licenses_title">%s | 開放原始碼程式庫</string>
 
+    <!-- About page link text to open support link -->
+    <string name="about_support">技術支援</string>
+    <!-- About page link text to open privacy notice link -->
+    <string name="about_privacy_notice">隱私權保護政策</string>
+    <!-- About page link text to open know your rights link -->
+    <string name="about_know_your_rights">了解您的權利</string>
+    <!-- About page link text to open licensing information link -->
+    <string name="about_licensing_information">授權資訊</string>
+    <!-- About page link text to open a screen with libraries that are used -->
+    <string name="about_other_open_source_libraries">我們使用的程式庫</string>
+
     <!-- Content description of the tab counter toolbar button when one tab is open -->
     <string name="tab_counter_content_description_one_tab">1 個分頁</string>
     <!-- Content description of the tab counter toolbar button when multiple tabs are open. First parameter will be replaced with the number of tabs (always more than one) -->
@@ -1075,7 +1103,7 @@
     <!-- Title of warning dialog if users have no device authentication set up -->
     <string name="logins_warning_dialog_title">保護您的登入資訊與密碼</string>
     <!-- Message of warning dialog if users have no device authentication set up -->
-    <string name="logins_warning_dialog_message">設定裝備鎖定方式、PIN 碼或密碼來保護您儲存下來的登入資訊與密碼，避免別人盜用。</string>
+    <string name="logins_warning_dialog_message">設定裝備解鎖圖形、PIN 碼或密碼來保護您儲存下來的登入資訊與密碼，避免別人盜用。</string>
     <!-- Negative button to ignore warning dialog if users have no device authentication set up -->
     <string name="logins_warning_dialog_later">稍後處理</string>
     <!-- Positive button to send users to set up a pin of warning dialog if users have no device authentication set up -->
@@ -1101,7 +1129,7 @@
     <string name="search_engine_delete">刪除</string>
 
     <!-- Text for the button to create a custom search engine on the Add search engine screen -->
-    <string name="search_add_custom_engine_label">自訂</string>
+    <string name="search_add_custom_engine_label_other">其他</string>
     <!-- Placeholder text shown in the Search Engine Name TextField before a user enters text -->
     <string name="search_add_custom_engine_name_hint">名稱</string>
     <!-- Placeholder text shown in the Search String TextField before a user enters text -->
