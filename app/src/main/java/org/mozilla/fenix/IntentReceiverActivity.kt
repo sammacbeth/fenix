@@ -16,43 +16,6 @@ import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.shortcut.NewTabShortcutIntentProcessor
 
-enum class IntentProcessorType {
-    EXTERNAL_APP, NEW_TAB, OTHER;
-
-    /**
-     * The destination activity based on this intent
-     */
-    val activityClassName: String
-        get() = when (this) {
-            EXTERNAL_APP -> ExternalAppBrowserActivity::class.java.name
-            NEW_TAB -> HomeActivity::class.java.name
-            OTHER -> HomeActivity::class.java.name
-        }
-
-    /**
-     * Should this intent automatically navigate to the browser?
-     */
-    fun shouldOpenToBrowser(intent: Intent): Boolean = when (this) {
-        EXTERNAL_APP -> true
-        NEW_TAB -> intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0
-        OTHER -> false
-    }
-}
-
-/**
- * Classifies the [IntentType] based on the [IntentProcessor] that handled the [Intent]
- */
-fun IntentProcessor?.getType(intentProcessors: IntentProcessors): IntentProcessorType {
-    return when {
-        intentProcessors.externalAppIntentProcessors.contains(this) ||
-            intentProcessors.customTabIntentProcessor == this ||
-            intentProcessors.privateCustomTabIntentProcessor == this -> IntentProcessorType.EXTERNAL_APP
-        intentProcessors.intentProcessor == this ||
-                intentProcessors.privateIntentProcessor == this -> IntentProcessorType.NEW_TAB
-        else -> IntentProcessorType.OTHER
-    }
-}
-
 /**
  * Processes incoming intents and sends them to the corresponding activity.
  */

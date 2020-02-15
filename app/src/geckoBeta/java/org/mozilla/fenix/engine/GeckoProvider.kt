@@ -9,6 +9,7 @@ import mozilla.components.lib.crash.handler.CrashHandlerService
 import mozilla.components.lib.dataprotect.SecureAbove22Preferences
 import mozilla.components.service.experiments.Experiments
 import mozilla.components.service.sync.logins.AsyncLoginsStorage
+import org.mozilla.fenix.BuildConfig
 import org.mozilla.fenix.Config
 import org.mozilla.fenix.utils.Settings
 import org.mozilla.geckoview.GeckoRuntime

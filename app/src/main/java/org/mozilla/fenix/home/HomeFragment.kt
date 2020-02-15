@@ -202,7 +202,7 @@ class HomeFragment : Fragment() {
 
         ConstraintSet().apply {
             clone(view.homeLayout)
-            connect(sessionControlView.view.id, TOP, view.wordmark.id, BOTTOM)
+            connect(sessionControlView.view.id, TOP, view.privateBrowsingButton.id, BOTTOM)
             connect(sessionControlView.view.id, START, PARENT_ID, START)
             connect(sessionControlView.view.id, END, PARENT_ID, END)
             connect(sessionControlView.view.id, BOTTOM, view.bottom_bar.id, TOP)
